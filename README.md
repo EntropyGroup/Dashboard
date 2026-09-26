@@ -43,6 +43,8 @@ O workflow [`sync-banco.yml`](.github/workflows/sync-banco.yml) roda
 transações do banco em `lancamentos` com origem `banco`. As chaves da Pluggy e do Firebase Admin
 ficam só nos secrets do GitHub, nunca no navegador.
 
+- **Corte de data**: nada anterior à variável `PLUGGY_SINCE` (yyyy-mm-dd) é sincronizado nem removido —
+  usado porque a conta tinha movimentação pessoal antes de virar a conta do estúdio.
 - **Direção**: o campo `type` da Pluggy (DEBIT = saída, CREDIT = entrada); o valor é sempre positivo.
 - **Sem contagem dupla**: pagamento de fatura (na conta e no cartão) e transferência entre contas
   próprias são ignorados, porque as compras já vêm do cartão. Para ignorar mais descrições, use
@@ -54,10 +56,10 @@ ficam só nos secrets do GitHub, nunca no navegador.
 - **Pendentes**: transações `PENDING` que o banco descartar somem na sincronização seguinte.
 - **Status**: o card "Banco" no Financeiro mostra a última execução (documento `sync/pluggy`).
 
-Secrets do repositório (Settings → Secrets and variables → Actions): `PLUGGY_CLIENT_ID`,
+Secrets do repositório (Settings → Secrets and variables → Actions → Secrets): `PLUGGY_CLIENT_ID`,
 `PLUGGY_CLIENT_SECRET`, `PLUGGY_ITEM_IDS` (ids separados por vírgula) e `FIREBASE_SERVICE_ACCOUNT`
-(o JSON inteiro da conta de serviço). Para rodar localmente, as mesmas variáveis no `.env` e
-`npm run sync:banco`.
+(o JSON inteiro da conta de serviço). `PLUGGY_SINCE` fica em **Variables** (não é sensível, então
+não precisa ser secret). Para rodar localmente, as mesmas chaves no `.env` e `npm run sync:banco`.
 
 ## Módulos
 

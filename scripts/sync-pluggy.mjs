@@ -7,6 +7,10 @@
 //   PLUGGY_ITEM_IDS                         — comma-separated item ids (one per bank connection)
 //   FIREBASE_SERVICE_ACCOUNT                — service account JSON (the whole file, as one string)
 //   SYNC_DAYS                               — how far back to read (default 30)
+//   PLUGGY_SINCE                            — hard floor date (yyyy-mm-dd); nothing before it is ever
+//                                              synced or removed, no matter what SYNC_DAYS asks for.
+//                                              Use this when the account has personal history that
+//                                              predates using it for the company.
 //   PLUGGY_SKIP_REGEX                       — optional extra descriptions to ignore (case-insensitive)
 
 import { initializeApp, cert } from 'firebase-admin/app'
@@ -26,6 +30,13 @@ if (missing.length) {
 const itemIds = env.PLUGGY_ITEM_IDS.split(',').map((s) => s.trim()).filter(Boolean)
 const syncDays = Math.max(1, Number(env.SYNC_DAYS || 30))
 const extraSkip = env.PLUGGY_SKIP_REGEX ? new RegExp(env.PLUGGY_SKIP_REGEX, 'i') : null
+
+const since = env.PLUGGY_SINCE?.trim()
+if (since && !/^\d{4}-\d{2}-\d{2}$/.test(since)) {
+  console.error(`PLUGGY_SINCE deve ser uma data yyyy-mm-dd, recebi "${since}".`)
+  process.exit(1)
+}
+const sinceDate = since ? new Date(`${since}T00:00:00.000Z`) : null
 
 initializeApp({ credential: cert(JSON.parse(env.FIREBASE_SERVICE_ACCOUNT)) })
 const db = getFirestore()
@@ -154,7 +165,9 @@ const day = (d) => d.toISOString().slice(0, 10)
 async function run() {
   const apiKey = await authenticate()
   const to = new Date()
-  const from = new Date(to.getTime() - syncDays * 86400000)
+  let from = new Date(to.getTime() - syncDays * 86400000)
+  if (sinceDate && sinceDate > from) from = sinceDate
+  if (sinceDate) console.log(`Corte ativo: nada antes de ${day(sinceDate)} é sincronizado.`)
 
   const existingSnap = await db.collection('lancamentos').where('origem', '==', 'banco').get()
   const existing = new Map(existingSnap.docs.map((d) => [d.id, d.data()]))
@@ -178,6 +191,10 @@ async function run() {
       const seen = new Set()
 
       for (const tx of txs) {
+        if (sinceDate && new Date(tx.date) < sinceDate) {
+          stats.ignorados++
+          continue
+        }
         if (shouldSkip(tx, account)) {
           stats.ignorados++
           continue

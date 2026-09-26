@@ -8,8 +8,8 @@ service cloud.firestore {
     function isTeam() {
       return request.auth != null
         && request.auth.token.email in [
-          'EMAIL_DO_DANIEL@exemplo.com',
-          'EMAIL_DO_GUILHERME@exemplo.com'
+          'danielvgs.work@gmail.com',
+          'guileiteteixeira@gmail.com'
         ];
     }
 
