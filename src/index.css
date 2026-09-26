@@ -1,0 +1,331 @@
+@import 'tailwindcss';
+
+@theme {
+  /* ENTROPY design tokens — piano black + glass */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* deep, almost-void blacks — the "piano" surface */
+  --color-void: #030304;
+  --color-obsidian: #060608;
+  --color-piano: #0c0d10;
+  --color-graphite: #1c1e24;
+  --color-steel: #828994;
+  --color-mist: #c9cdd6;
+  --color-porcelain: #f5f5f2;
+  --color-pure-white: #ffffff;
+  --color-signal: #b9c3d4;
+
+  --color-success: #5bb07f;
+  --color-warning: #d29a4c;
+  --color-danger: #e07669;
+  --color-info: #7aa4dc;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --shadow-panel: 0 32px 80px -24px rgb(0 0 0 / 0.75);
+  --shadow-soft: 0 16px 40px -18px rgb(0 0 0 / 0.6);
+  --shadow-glow: 0 0 0 1px rgb(255 255 255 / 0.04), 0 20px 60px -30px rgb(0 0 0 / 0.9);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-graphite);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    position: relative;
+    background: var(--color-void);
+    color: var(--color-porcelain);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'ss01' 1;
+    min-height: 100vh;
+  }
+
+  /* Ambient light behind the glass — this is what makes blur read as "glass"
+     rather than flat translucent grey. Kept monochrome/dim per brand: no neon. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 34rem at 12% -10%, rgb(120 130 150 / 0.16), transparent 60%),
+      radial-gradient(50rem 30rem at 100% 8%, rgb(90 100 120 / 0.12), transparent 55%),
+      radial-gradient(70rem 40rem at 50% 115%, rgb(60 65 78 / 0.14), transparent 60%);
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
+  }
+
+  ::selection {
+    background: var(--color-signal);
+    color: var(--color-obsidian);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-graphite) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-graphite);
+    border-radius: 999px;
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-void), 0 0 0 4px var(--color-signal);
+    border-radius: var(--radius-sm);
+  }
+}
+
+@layer components {
+  /* Core glass surface — used by Card, Modal, Sidebar, popovers */
+  .glass {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.015));
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    border: 1px solid rgb(255 255 255 / 0.08);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      inset 0 0 0 1px rgb(0 0 0 / 0.2),
+      var(--shadow-soft);
+  }
+
+  .glass-strong {
+    background: linear-gradient(180deg, rgb(20 22 27 / 0.92), rgb(10 11 14 / 0.94));
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      var(--shadow-panel);
+  }
+
+  /* Extra-heavy frosted glass — for standalone floating controls (the "Mais" orb) */
+  .glass-heavy {
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(155deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.03) 40%, rgb(255 255 255 / 0.06));
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgb(255 255 255 / 0.16);
+    box-shadow:
+      inset 0 1.5px 0 rgb(255 255 255 / 0.35),
+      inset 0 -8px 16px -12px rgb(0 0 0 / 0.5),
+      0 18px 40px -16px rgb(0 0 0 / 0.75);
+    overflow: hidden;
+  }
+  .glass-heavy::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(ellipse 80% 60% at 30% 0%, rgb(255 255 255 / 0.22), transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Card-level glass: static corner highlight + a light streak that sweeps on hover.
+     isolation + z-index:-1 keeps both layers above the card fill but under its content. */
+  .glass-sheen {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.25s ease;
+  }
+  .glass-sheen::before,
+  .glass-sheen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .glass-sheen::before {
+    background: radial-gradient(120% 70% at 0% 0%, rgb(255 255 255 / 0.075), transparent 55%);
+  }
+  .glass-sheen::after {
+    background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.07) 50%, transparent 65%);
+    transform: translateX(-110%);
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glass-sheen:hover {
+    transform: translateY(-2px);
+    border-color: rgb(255 255 255 / 0.15);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
+      0 28px 56px -26px rgb(0 0 0 / 0.9);
+  }
+  .glass-sheen:hover::after {
+    transform: translateX(110%);
+  }
+
+  .glass-pill {
+    background: rgb(255 255 255 / 0.05);
+    border: 1px solid rgb(255 255 255 / 0.09);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07);
+  }
+
+  .glass-inset {
+    background: rgb(0 0 0 / 0.28);
+    border: 1px solid rgb(255 255 255 / 0.06);
+  }
+
+  .input {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid rgb(255 255 255 / 0.09);
+    background: rgb(0 0 0 / 0.3);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-porcelain);
+    outline: none;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .input:focus {
+    border-color: rgb(255 255 255 / 0.28);
+    background: rgb(0 0 0 / 0.4);
+  }
+  .input::placeholder {
+    color: var(--color-steel);
+  }
+
+  .hairline {
+    border-color: rgb(255 255 255 / 0.08);
+  }
+}
+
+@keyframes entropy-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Never put translate(-50%,-50%) in these: Tailwind v4 centers the dialog with the
+   separate `translate` property, and a transform translate would stack on top of it. */
+@keyframes entropy-dialog-in {
+  0% { opacity: 0; transform: translateY(24px) scale(0.9); filter: blur(10px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes entropy-dialog-out {
+  from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  to { opacity: 0; transform: translateY(10px) scale(0.95); filter: blur(6px); }
+}
+
+@keyframes entropy-backdrop-in {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to { opacity: 1; backdrop-filter: blur(12px); }
+}
+
+@keyframes entropy-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes entropy-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.entropy-overlay[data-state='open'] {
+  animation: entropy-backdrop-in 0.3s ease-out both;
+}
+.entropy-overlay[data-state='closed'] {
+  animation: entropy-fade-out 0.18s ease-in both;
+}
+
+.entropy-dialog {
+  will-change: transform, opacity;
+}
+.entropy-dialog[data-state='open'] {
+  animation: entropy-dialog-in 0.42s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+.entropy-dialog[data-state='closed'] {
+  animation: entropy-dialog-out 0.18s ease-in both;
+}
+
+/* header, then each field/row of the body cascades in */
+.entropy-dialog[data-state='open'] .entropy-dialog-head,
+.entropy-dialog[data-state='open'] .entropy-dialog-body > * > * {
+  animation: entropy-item-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 70ms;
+}
+.entropy-dialog[data-state='open'] .entropy-dialog-body > * > :nth-child(1) { animation-delay: 110ms; }
+.entropy-dialog[data-state='open'] .entropy-dialog-body > * > :nth-child(2) { animation-delay: 140ms; }
+.entropy-dialog[data-state='open'] .entropy-dialog-body > * > :nth-child(3) { animation-delay: 170ms; }
+.entropy-dialog[data-state='open'] .entropy-dialog-body > * > :nth-child(4) { animation-delay: 200ms; }
+.entropy-dialog[data-state='open'] .entropy-dialog-body > * > :nth-child(5) { animation-delay: 230ms; }
+.entropy-dialog[data-state='open'] .entropy-dialog-body > * > :nth-child(n + 6) { animation-delay: 260ms; }
+
+/* "Mais" menu — grows out of the center orb. Only scale/translate/blur, never the
+   Radix positioning transform, so it can't start at the wrong spot. */
+@keyframes entropy-sheet-in {
+  0% { opacity: 0; transform: translateY(18px) scale(0.82); filter: blur(10px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes entropy-sheet-out {
+  from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  to { opacity: 0; transform: translateY(12px) scale(0.9); filter: blur(6px); }
+}
+
+@keyframes entropy-item-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.entropy-sheet {
+  transform-origin: var(--radix-popover-content-transform-origin);
+  will-change: transform, opacity;
+}
+.entropy-sheet[data-state='open'] {
+  animation: entropy-sheet-in 0.42s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+.entropy-sheet[data-state='closed'] {
+  animation: entropy-sheet-out 0.18s ease-in both;
+}
+.entropy-sheet[data-state='open'] .entropy-sheet-item {
+  animation: entropy-item-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(80ms + var(--i, 0) * 22ms);
+}
+
+.entropy-orb-mark {
+  transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+[data-state='open'] > .entropy-orb-mark {
+  transform: rotate(135deg) scale(1.08);
+}
+
+.entropy-rise {
+  animation: entropy-rise 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
