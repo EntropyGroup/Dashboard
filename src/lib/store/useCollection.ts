@@ -10,8 +10,26 @@ import {
   updateDoc,
   type QueryConstraint,
 } from 'firebase/firestore'
+import { toast } from 'sonner'
 import { db, isFirebaseConfigured } from '@/lib/firebase'
 import { uid } from '@/lib/utils'
+
+function firestoreMessage(err: unknown, action: string) {
+  const code = (err as { code?: string })?.code
+  if (code === 'permission-denied') return `Sem permissão para ${action}. Confira as regras do Firestore.`
+  if (code === 'unavailable') return `Sem conexão com o banco para ${action}. Tente de novo.`
+  return `Não foi possível ${action}${code ? ` (${code})` : ''}.`
+}
+
+async function guarded<R>(action: string, run: () => Promise<R>): Promise<R> {
+  try {
+    return await run()
+  } catch (err) {
+    console.error(`[firestore] ${action}`, err)
+    toast.error(firestoreMessage(err, action))
+    throw err
+  }
+}
 
 const memoryStores = new Map<string, Record<string, any>>()
 const memoryListeners = new Map<string, Set<() => void>>()
@@ -48,7 +66,12 @@ export function useCollection<T extends { id: string }>(
           setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T))
           setLoading(false)
         },
-        () => setLoading(false),
+        (err) => {
+          console.error(`[firestore] leitura de "${path}" falhou`, err)
+          // one toast for all collections failing at once (e.g. rules not published)
+          toast.error(firestoreMessage(err, 'carregar os dados'), { id: 'firestore-read' })
+          setLoading(false)
+        },
       )
       return unsub
     }
@@ -83,7 +106,8 @@ export function useCollection<T extends { id: string }>(
     () => ({
       async add(data: Omit<T, 'id'>, id: string = uid()) {
         if (isFirebaseConfigured && db) {
-          await setDoc(doc(db, path, id), data as any)
+          const firestore = db
+          await guarded('salvar', () => setDoc(doc(firestore, path, id), data as any))
         } else {
           const store = getMemoryStore(path)
           store[id] = { id, ...data }
@@ -93,7 +117,8 @@ export function useCollection<T extends { id: string }>(
       },
       async update(id: string, data: Partial<T>) {
         if (isFirebaseConfigured && db) {
-          await updateDoc(doc(db, path, id), data as any)
+          const firestore = db
+          await guarded('salvar', () => updateDoc(doc(firestore, path, id), data as any))
         } else {
           const store = getMemoryStore(path)
           if (store[id]) Object.assign(store[id], data)
@@ -102,7 +127,8 @@ export function useCollection<T extends { id: string }>(
       },
       async remove(id: string) {
         if (isFirebaseConfigured && db) {
-          await deleteDoc(doc(db, path, id))
+          const firestore = db
+          await guarded('excluir', () => deleteDoc(doc(firestore, path, id)))
         } else {
           const store = getMemoryStore(path)
           delete store[id]

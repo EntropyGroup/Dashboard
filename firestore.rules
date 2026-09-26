@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Cole no Firebase Console → Firestore Database → Regras → Publicar.
+// Troque os dois emails abaixo pelos emails de login do Daniel e do Guilherme.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isTeam() {
+      return request.auth != null
+        && request.auth.token.email in [
+          'EMAIL_DO_DANIEL@exemplo.com',
+          'EMAIL_DO_GUILHERME@exemplo.com'
+        ];
+    }
+
+    function isOwner(uid) {
+      return isTeam() && request.auth.uid == uid;
+    }
+
+    // Dados compartilhados do estúdio
+    match /projetos/{id}    { allow read, write: if isTeam(); }
+    match /clientes/{id}    { allow read, write: if isTeam(); }
+    match /lancamentos/{id} { allow read, write: if isTeam(); }
+    match /eventos/{id}     { allow read, write: if isTeam(); }
+    match /atividades/{id}  { allow read, write: if isTeam(); }
+    match /leads/{id}       { allow read, write: if isTeam(); }
+    match /quadros/{id}     { allow read, write: if isTeam(); }
+
+    // Dados privados de cada pessoa
+    match /projetosPessoais/{uid}/itens/{id} { allow read, write: if isOwner(uid); }
+    match /quadros_usuario/{uid}/itens/{id}  { allow read, write: if isOwner(uid); }
+
+    // Todo o resto: fechado
+  }
+}

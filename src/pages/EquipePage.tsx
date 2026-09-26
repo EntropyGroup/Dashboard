@@ -1,13 +1,11 @@
-import { useStore } from '@/lib/store/StoreProvider'
 import { Card } from '@/components/ui/Card'
 import { initials } from '@/lib/utils'
+import { founders } from '@/lib/team'
 
 export function EquipePage() {
-  const { equipe } = useStore()
-
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {equipe.items.map((member) => (
+      {founders.map((member) => (
         <Card key={member.id} className="glass-sheen px-6 pt-8 pb-6 text-center">
           <div className="relative mx-auto mb-5 h-20 w-20">
             <div className="absolute inset-0 -z-10 scale-125 rounded-full bg-[radial-gradient(circle,rgb(185_195_212_/_0.18),transparent_70%)] blur-xl" />
@@ -26,7 +24,6 @@ export function EquipePage() {
           </div>
         </Card>
       ))}
-      {!equipe.items.length && <p className="text-xs text-steel">Nenhum membro cadastrado.</p>}
     </div>
   )
 }

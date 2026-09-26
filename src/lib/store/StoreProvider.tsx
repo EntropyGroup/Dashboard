@@ -11,7 +11,6 @@ import type {
   Lead,
   PersonalProject,
   Project,
-  TeamMember,
 } from './types'
 
 interface StoreValue {
@@ -22,7 +21,6 @@ interface StoreValue {
   eventos: ReturnType<typeof useCollection<Evento>>
   atividades: ReturnType<typeof useCollection<Atividade>>
   leads: ReturnType<typeof useCollection<Lead>>
-  equipe: ReturnType<typeof useCollection<TeamMember>>
   quadroEquipe: ReturnType<typeof useCollection<Board>>
   minhasNotas: ReturnType<typeof useCollection<Board>>
   log: (texto: string) => void
@@ -43,7 +41,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     seedMemoryStore('eventos', seededCollections.eventos)
     seedMemoryStore('atividades', seededCollections.atividades)
     seedMemoryStore('leads', seededCollections.leads)
-    seedMemoryStore('equipe', seededCollections.equipe)
   }, [])
 
   const projetos = useCollection<Project>('projetos', { orderByField: 'criadoEm', direction: 'desc' })
@@ -53,7 +50,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const eventos = useCollection<Evento>('eventos', { orderByField: 'data' })
   const atividades = useCollection<Atividade>('atividades', { orderByField: 'criadoEm', direction: 'desc' })
   const leads = useCollection<Lead>('leads', { orderByField: 'criadoEm', direction: 'desc' })
-  const equipe = useCollection<TeamMember>('equipe')
   const quadroEquipe = useCollection<Board>('quadros')
   const minhasNotas = useCollection<Board>(`quadros_usuario/${user?.uid ?? 'anon'}/itens`)
 
@@ -63,7 +59,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       autorUid: user?.uid,
       autorNome: user?.displayName ?? user?.email ?? undefined,
       criadoEm: new Date().toISOString(),
-    })
+    }).catch(() => {}) // the failure is already toasted; the logged action itself succeeded
   }
 
   return (
@@ -76,7 +72,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         eventos,
         atividades,
         leads,
-        equipe,
         quadroEquipe,
         minhasNotas,
         log,

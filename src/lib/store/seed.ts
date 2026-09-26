@@ -6,7 +6,6 @@ import type {
   Lancamento,
   Lead,
   Project,
-  TeamMember,
 } from './types'
 
 const now = new Date()
@@ -149,11 +148,6 @@ export const seedLeads: Lead[] = [
   },
 ]
 
-export const seedTeam: TeamMember[] = [
-  { id: uid(), nome: 'Daniel', cargo: 'Fundador · Produto & Engenharia', stack: ['React', 'TypeScript', 'Node'] },
-  { id: uid(), nome: 'Guilherme', cargo: 'Fundador · Design & Estratégia', stack: ['Design de produto', 'Branding', '3D'] },
-]
-
 export const seededCollections = {
   clientes: keyBy(seedClients),
   projetos: keyBy(seedProjects),
@@ -161,5 +155,4 @@ export const seededCollections = {
   eventos: keyBy(seedEventos),
   atividades: keyBy(seedAtividades),
   leads: keyBy(seedLeads),
-  equipe: keyBy(seedTeam),
 }

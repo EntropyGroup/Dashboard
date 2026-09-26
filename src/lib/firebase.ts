@@ -1,6 +1,6 @@
 import { initializeApp, getApps, type FirebaseOptions } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore, initializeFirestore } from 'firebase/firestore'
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,9 +13,13 @@ const firebaseConfig: FirebaseOptions = {
 
 export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId)
 
-const app = isFirebaseConfigured
-  ? getApps()[0] ?? initializeApp(firebaseConfig)
-  : undefined
+const existing = getApps()[0]
+const app = isFirebaseConfigured ? existing ?? initializeApp(firebaseConfig) : undefined
 
 export const auth = app ? getAuth(app) : undefined
-export const db = app ? getFirestore(app) : undefined
+// Optional form fields reach Firestore as `undefined`, which it rejects by default.
+export const db = app
+  ? existing
+    ? getFirestore(app)
+    : initializeFirestore(app, { ignoreUndefinedProperties: true })
+  : undefined
