@@ -102,6 +102,28 @@ export const seedLancamentos: Lancamento[] = [
     data: iso(daysAgo(5)),
     criadoEm: iso(daysAgo(5)),
   },
+  {
+    id: 'pluggy_demo_1',
+    tipo: 'saida',
+    origem: 'banco',
+    descricao: 'Figma',
+    categoria: 'Serviços digitais',
+    valor: 89.9,
+    data: iso(daysAgo(2)),
+    criadoEm: iso(daysAgo(2)),
+    banco: { provedor: 'pluggy', transacaoId: 'demo-1', contaId: 'demo-card', contaNome: 'Nubank Ultravioleta', contaTipo: 'CREDIT', status: 'POSTED' },
+  },
+  {
+    id: 'pluggy_demo_2',
+    tipo: 'saida',
+    origem: 'banco',
+    descricao: 'MacBook Air',
+    categoria: 'Compras',
+    valor: 812.5,
+    data: iso(daysAgo(3)),
+    criadoEm: iso(daysAgo(3)),
+    banco: { provedor: 'pluggy', transacaoId: 'demo-2', contaId: 'demo-card', contaNome: 'Nubank Ultravioleta', contaTipo: 'CREDIT', status: 'POSTED', parcela: '3/12' },
+  },
 ]
 
 export const seedEventos: Evento[] = [

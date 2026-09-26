@@ -61,6 +61,28 @@ export interface Lancamento {
   data: string
   projetoId?: string
   criadoEm: string
+  /** Bank entries can't be deleted (the next sync would bring them back), only hidden. */
+  oculto?: boolean
+  banco?: {
+    provedor: 'pluggy'
+    transacaoId: string
+    contaId: string
+    contaNome: string
+    contaTipo: 'BANK' | 'CREDIT'
+    status?: string
+    parcela?: string
+  }
+}
+
+export interface SyncStatus {
+  id: string
+  ultimaExecucao: string
+  status: 'ok' | 'erro'
+  novos: number
+  atualizados: number
+  removidos: number
+  contas: string[]
+  mensagem?: string
 }
 
 export type EventoTipo = 'reuniao' | 'entrega' | 'financeiro' | 'pessoal' | 'outro'

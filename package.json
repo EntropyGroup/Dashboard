@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync:banco": "node --env-file=.env scripts/sync-pluggy.mjs",
+    "dev:demo": "vite --mode demo --port 5174"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.2.6",
@@ -40,6 +42,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "firebase-admin": "^14.5.0",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"

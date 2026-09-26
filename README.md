@@ -16,7 +16,8 @@ identidade visual da Entropy (preto piano, prata fria, tipografia Inter).
 
 ```bash
 npm install
-npm run dev
+npm run dev        # usa o Firebase do .env
+npm run dev:demo   # porta 5174, sem Firebase, com dados de exemplo
 ```
 
 ## Firebase (opcional)
@@ -32,13 +33,38 @@ Para ligar dados reais:
 3. Copie `.env.example` para `.env` e preencha com as credenciais do app web do projeto.
 4. Reinicie `npm run dev`. O app passa a usar Firebase automaticamente (detecta pela presença das
    variáveis de ambiente).
+5. Publique as regras de [`firestore.rules`](firestore.rules) em **Firestore → Regras**, com os
+   emails do time na lista.
+
+## Sincronização bancária (Pluggy / MeuPluggy)
+
+O workflow [`sync-banco.yml`](.github/workflows/sync-banco.yml) roda
+[`scripts/sync-pluggy.mjs`](scripts/sync-pluggy.mjs) às 9h e às 21h (Brasília) e grava as
+transações do banco em `lancamentos` com origem `banco`. As chaves da Pluggy e do Firebase Admin
+ficam só nos secrets do GitHub, nunca no navegador.
+
+- **Direção**: o campo `type` da Pluggy (DEBIT = saída, CREDIT = entrada); o valor é sempre positivo.
+- **Sem contagem dupla**: pagamento de fatura (na conta e no cartão) e transferência entre contas
+  próprias são ignorados, porque as compras já vêm do cartão. Para ignorar mais descrições, use
+  o secret opcional `PLUGGY_SKIP_REGEX`.
+- **Edições do time valem**: descrição, categoria e projeto de um lançamento do banco podem ser
+  editados e a sincronização não sobrescreve. Valor, data e tipo são do banco.
+- **Ocultar em vez de excluir**: um lançamento do banco ocultado continua no Firestore marcado
+  `oculto: true`, para não voltar na próxima sincronização.
+- **Pendentes**: transações `PENDING` que o banco descartar somem na sincronização seguinte.
+- **Status**: o card "Banco" no Financeiro mostra a última execução (documento `sync/pluggy`).
+
+Secrets do repositório (Settings → Secrets and variables → Actions): `PLUGGY_CLIENT_ID`,
+`PLUGGY_CLIENT_SECRET`, `PLUGGY_ITEM_IDS` (ids separados por vírgula) e `FIREBASE_SERVICE_ACCOUNT`
+(o JSON inteiro da conta de serviço). Para rodar localmente, as mesmas variáveis no `.env` e
+`npm run sync:banco`.
 
 ## Módulos
 
 - **Dashboard** — KPIs do mês, receita dos últimos 6 meses, atividade recente, projetos em andamento.
 - **Analytics** — placeholder com dados de exemplo (visitas, fontes de tráfego).
 - **Atividades** — log de auditoria de todas as ações do time.
-- **Financeiro** — lançamentos de entrada/saída, filtro por origem, CRUD.
+- **Financeiro** — lançamentos manuais e do banco (Pluggy), saídas por categoria, vínculo com projeto.
 - **Clientes** — cadastro com projetos vinculados.
 - **Leads** — funil simples com conversão em cliente + projeto.
 - **Projetos** / **Projeto (detalhe)** — status, progresso via checklist, financeiro vinculado.
@@ -52,8 +78,9 @@ Para ligar dados reais:
 ## Estrutura
 
 ```
+scripts/         sync-pluggy.mjs (sincronização bancária, roda no GitHub Actions)
 src/
-  components/    ui/ (primitivos), layout/ (sidebar, shell), brand/, shared/
+  components/    ui/ (primitivos), layout/ (header, bottom bar), brand/, shared/
   features/auth/ AuthProvider + tela de login
   lib/           firebase.ts, store/ (dados), utils.ts, navItems.ts
   pages/         um arquivo por módulo/rota

@@ -16,3 +16,7 @@ Thumbs.db
 
 # Logs
 npm-debug.log*
+
+# Credenciais de servidor
+*firebase-adminsdk*.json
+service-account*.json

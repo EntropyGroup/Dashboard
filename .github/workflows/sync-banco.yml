@@ -1,0 +1,40 @@
+name: Sincronizar banco
+
+on:
+  schedule:
+    # 09:00 e 21:00 em Brasília (12:00 e 00:00 UTC). O MeuPluggy atualiza a conexão 1x por dia.
+    - cron: '0 12 * * *'
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      dias:
+        description: 'Quantos dias para trás ler (use 90 na primeira vez)'
+        required: false
+        default: '30'
+
+concurrency:
+  group: sync-banco
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sincronizar Pluggy → Firestore
+        run: node scripts/sync-pluggy.mjs
+        env:
+          PLUGGY_CLIENT_ID: ${{ secrets.PLUGGY_CLIENT_ID }}
+          PLUGGY_CLIENT_SECRET: ${{ secrets.PLUGGY_CLIENT_SECRET }}
+          PLUGGY_ITEM_IDS: ${{ secrets.PLUGGY_ITEM_IDS }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SYNC_DAYS: ${{ github.event.inputs.dias || '30' }}

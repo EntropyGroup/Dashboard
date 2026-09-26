@@ -26,6 +26,10 @@ service cloud.firestore {
     match /leads/{id}       { allow read, write: if isTeam(); }
     match /quadros/{id}     { allow read, write: if isTeam(); }
 
+    // Status da sincronização bancária: o script escreve com a conta de serviço (que ignora
+    // estas regras); o painel só lê.
+    match /sync/{id}        { allow read: if isTeam(); }
+
     // Dados privados de cada pessoa
     match /projetosPessoais/{uid}/itens/{id} { allow read, write: if isOwner(uid); }
     match /quadros_usuario/{uid}/itens/{id}  { allow read, write: if isOwner(uid); }
