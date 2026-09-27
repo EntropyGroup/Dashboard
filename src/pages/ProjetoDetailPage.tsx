@@ -9,6 +9,7 @@ import { useConfirm } from '@/components/ui/ConfirmProvider'
 import { ProgressBar, progressFromTodos } from '@/components/ui/ProgressBar'
 import { TodoList } from '@/components/shared/TodoList'
 import { TagInput } from '@/components/shared/TagInput'
+import { GithubActivity } from '@/components/shared/GithubActivity'
 import { founders } from '@/lib/team'
 import { cn, formatCurrency, formatDate, initials } from '@/lib/utils'
 import type { ProjectStatus } from '@/lib/store/types'
@@ -217,6 +218,8 @@ export function ProjetoDetailPage() {
               <p className="text-xs text-steel">Nenhum lançamento vinculado a este projeto ainda.</p>
             )}
           </Card>
+
+          <GithubActivity link={project.link} />
         </div>
 
         <Card>

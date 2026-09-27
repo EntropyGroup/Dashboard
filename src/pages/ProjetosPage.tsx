@@ -1,5 +1,5 @@
 import { useState, type MouseEvent, type ReactNode } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useStore } from '@/lib/store/StoreProvider'
 import { Card } from '@/components/ui/Card'
@@ -24,6 +24,7 @@ const emptyForm = {
 
 export function ProjetosPage() {
   const { projetos, clientes, log } = useStore()
+  const navigate = useNavigate()
   const confirm = useConfirm()
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Project | null>(null)
@@ -120,9 +121,13 @@ export function ProjetosPage() {
                 const cliente = clientes.items.find((c) => c.id === p.clienteId)
                 const progress = progressFromTodos(p.todos)
                 return (
-                  <tr key={p.id} className="group transition-colors hover:bg-white/[0.035]">
+                  <tr
+                    key={p.id}
+                    onClick={() => navigate(`/projetos/${p.id}`)}
+                    className="group cursor-pointer transition-colors hover:bg-white/[0.035]"
+                  >
                     <td className="px-5 py-3">
-                      <RouterLink to={`/projetos/${p.id}`} className="block">
+                      <RouterLink to={`/projetos/${p.id}`} onClick={(e) => e.stopPropagation()} className="block">
                         <p className="text-porcelain group-hover:text-signal">{p.nome}</p>
                         <p className="text-[11px] text-steel">{p.tipo}</p>
                       </RouterLink>
