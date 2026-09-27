@@ -212,6 +212,64 @@
   .hairline {
     border-color: rgb(255 255 255 / 0.08);
   }
+
+  .prose-notes :is(h1, h2, h3) {
+    margin: 0.9em 0 0.35em;
+    font-weight: 500;
+    color: var(--color-porcelain);
+  }
+  .prose-notes :is(h1, h2, h3):first-child {
+    margin-top: 0;
+  }
+  .prose-notes h1 {
+    font-size: 1.05rem;
+  }
+  .prose-notes h2 {
+    font-size: 0.95rem;
+  }
+  .prose-notes h3 {
+    font-size: 0.875rem;
+  }
+  .prose-notes p {
+    margin: 0.5em 0;
+  }
+  .prose-notes :is(ul, ol) {
+    margin: 0.5em 0;
+    padding-left: 1.25em;
+  }
+  .prose-notes li {
+    margin: 0.2em 0;
+  }
+  .prose-notes ul {
+    list-style: disc;
+  }
+  .prose-notes ol {
+    list-style: decimal;
+  }
+  .prose-notes blockquote {
+    margin: 0.5em 0;
+    padding-left: 0.75em;
+    border-left: 2px solid rgb(255 255 255 / 0.15);
+    color: var(--color-steel);
+  }
+  .prose-notes code {
+    border-radius: 4px;
+    background: rgb(0 0 0 / 0.3);
+    padding: 0.1em 0.4em;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+  }
+  .prose-notes a {
+    color: var(--color-signal);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .prose-notes > *:first-child {
+    margin-top: 0;
+  }
+  .prose-notes > *:last-child {
+    margin-bottom: 0;
+  }
 }
 
 @keyframes entropy-fade-in {
