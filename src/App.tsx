@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
+import { TrevorProvider } from '@/features/trevor/TrevorProvider'
+import { TrevorPage } from '@/pages/TrevorPage'
 import { Server, ShieldCheck } from 'lucide-react'
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider'
 import { LoginScreen } from '@/features/auth/LoginScreen'
@@ -38,9 +40,11 @@ function Gate() {
   return (
     <StoreProvider>
       <ConfirmProvider>
+        <TrevorProvider key={user.uid}>
         <Routes>
           <Route element={<AppLayout />}>
             <Route index element={<DashboardPage />} />
+            <Route path="trevor" element={<TrevorPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="atividades" element={<AtividadesPage />} />
             <Route path="financeiro" element={<FinanceiroPage />} />
@@ -76,6 +80,7 @@ function Gate() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
+        </TrevorProvider>
       </ConfirmProvider>
     </StoreProvider>
   )

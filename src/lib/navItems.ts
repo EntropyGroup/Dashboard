@@ -1,4 +1,5 @@
 import {
+  Bot,
   LayoutDashboard,
   Wallet,
   Users,
@@ -32,6 +33,7 @@ export const navGroups: NavGroup[] = [
     label: 'Visão geral',
     items: [
       { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { path: '/trevor', label: 'Trevor', icon: Bot },
       { path: '/analytics', label: 'Analytics', icon: BarChart3 },
       { path: '/atividades', label: 'Atividades', icon: Activity },
     ],

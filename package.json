@@ -9,7 +9,10 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "sync:banco": "node --env-file=.env scripts/sync-pluggy.mjs",
-    "dev:demo": "vite --mode demo --port 5174"
+    "dev:demo": "vite --mode demo --port 5174",
+    "dev:trevor": "node --env-file-if-exists=.env --watch server/index.ts",
+    "start:trevor": "node --env-file-if-exists=.env server/index.ts",
+    "test:trevor": "node --test tests/trevor.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.2.6",
@@ -35,16 +38,19 @@
     "recharts": "^3.10.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "firebase-admin": "^14.5.0"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
-    "firebase-admin": "^14.5.0",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

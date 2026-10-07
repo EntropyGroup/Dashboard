@@ -87,3 +87,62 @@ src/
   lib/           firebase.ts, store/ (dados), utils.ts, navItems.ts
   pages/         um arquivo por módulo/rota
 ```
+
+## Trevor — assistente do dashboard
+
+O Trevor usa a **API do Gemini diretamente**, por um serviço Node em `server/`. Não usa Firebase AI Logic. O Firebase existente continua responsável pelo login e pelas permissões de leitura/escrita dos dados. A chave do Gemini permanece no servidor.
+
+No menu **Trevor** e no botão do cabeçalho:
+
+- Conversa com Gemini e propostas de ações que só são executadas após confirmação.
+- Resumo financeiro do mês e revisão dos registros/checklists de projetos.
+- Criação de eventos, tarefas, leads, clientes, projetos, lançamentos manuais e notas; alteração de status/URL de produção e exclusão de eventos.
+- Conversão de lead em cliente ao criar um projeto a partir do lead.
+- Avisos sobre eventos de hoje/amanhã, leads não vistos, projetos sem atualização, URL de produção ausente e falha de sincronização bancária.
+- Pedidos rápidos para eventos, tarefas e avisos, disponíveis mesmo sem Gemini.
+
+Avisos automáticos são calculados enquanto o dashboard está aberto. Avisos manuais e marcações de leitura ficam no navegador, por conta. Não há envio de email/WhatsApp nem execução em segundo plano com o dashboard fechado. A conversa permanece em memória durante a sessão e a navegação; recarregar a página limpa a conversa.
+
+### Configuração local
+
+Use **Node 22.18+**. Instale com `npm ci`, copie `.env.example` para `.env` e configure:
+
+1. `GEMINI_API_KEY`: chave criada no [Google AI Studio](https://aistudio.google.com/apikey). **Não use `VITE_` nessa variável e não cole a chave na interface.**
+2. `GEMINI_MODEL`: padrão `gemini-3.5-flash-lite`, configurável no servidor.
+3. `FIREBASE_SERVICE_ACCOUNT`: JSON da conta de serviço do projeto do login, já usado pelo sincronismo bancário; ou credenciais padrão do Google por `GOOGLE_APPLICATION_CREDENTIALS`/ADC.
+4. `FIREBASE_PROJECT_ID`: projeto do login (`entropydash` por padrão no exemplo).
+5. `TREVOR_ALLOWED_EMAILS`: mesmos emails autorizados nas regras do dashboard.
+
+Rode em dois terminais:
+
+```bash
+npm run dev:trevor
+npm run dev
+```
+
+O Vite encaminha `/api/trevor` ao servidor na porta 8787. `npm run dev:demo` habilita apenas o modo local, sem chamada ao Gemini nem bypass do login no backend. Sem chave/servidor, os resumos locais, avisos e pedidos rápidos continuam funcionando. Após configurar o backend, use **Verificar conexão do Trevor** na página.
+
+Antes de enviar dados ao Gemini, o usuário ativa **Compartilhar contexto**. O contexto inclui totais financeiros e registros limitados de projetos/agenda; não envia contatos, notas pessoais, detalhes bancários ou código-fonte. O texto que o usuário digita na conversa é enviado à API. No [plano gratuito do Gemini](https://ai.google.dev/gemini-api/docs/pricing), conteúdo pode ser usado pelo Google para melhorar os produtos; evite informações confidenciais. Usar Gemini diretamente não torna a API ilimitada ou garante gratuidade: depende do plano/modelo da chave.
+
+### Produção
+
+O Firebase Hosting atual entrega apenas arquivos estáticos. Hospede o serviço Node separadamente em um ambiente com suporte a Node 22.18+:
+
+- Instalação: `npm ci --omit=dev`. Inicialização: `npm run start:trevor`.
+- Configure os segredos acima no servidor, `PORT` conforme o host e `TREVOR_HOST=0.0.0.0` quando necessário para o host receber conexões.
+- Configure `TREVOR_ALLOWED_ORIGINS` com as origens HTTPS exatas do dashboard, separadas por vírgula.
+- Configure `VITE_TREVOR_API_URL=https://URL-DO-SERVIDOR` no build do frontend, sem `/api/trevor` no fim. Alternativamente, encaminhe `/api/trevor` e `/api/trevor/health` por proxy na mesma origem.
+- Publique o build atualizado do frontend separadamente. Nenhum servidor, plano pago ou serviço externo é criado automaticamente por esta implementação.
+
+O backend verifica tokens Firebase e a lista da equipe, restringe CORS e aceita até 12 pedidos por minuto por usuário (limite em memória por processo). Se escalar para múltiplas instâncias, configure também um limite compartilhado no gateway. As propostas são validadas no backend e no frontend; as gravações usam o SDK já existente e continuam sujeitas às regras do Firestore. O backend não usa Firebase Admin para escrever dados.
+
+### Validação
+
+```bash
+npm run build
+npx tsc -p server/tsconfig.json
+npm run lint
+npm run test:trevor
+```
+
+Os testes cobrem validação de ações, datas no fuso local, exclusão de lançamentos ocultos dos totais, autenticação/CORS/limites do backend, erros de geração e execução idempotente de tarefas/notas. As chamadas ao Gemini são simuladas nos testes; não consomem cota.

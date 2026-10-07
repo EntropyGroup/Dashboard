@@ -1,9 +1,12 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Bell, Bot } from 'lucide-react'
+import { useTrevor } from '@/features/trevor/TrevorProvider'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { BottomBar, useCurrentNavLabel } from './BottomBar'
 import { EntropyMark, EntropyWordmark } from '@/components/brand/EntropyMark'
 import { formatDate } from '@/lib/utils'
 
 export function AppLayout() {
+  const { notices } = useTrevor()
   const location = useLocation()
   const label = useCurrentNavLabel()
 
@@ -16,6 +19,7 @@ export function AppLayout() {
           <h1 className="hidden text-sm font-medium text-porcelain sm:block">{label ?? 'Entropy'}</h1>
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/trevor" aria-label={`Abrir Trevor, ${notices.length} avisos pendentes`} className="glass-pill relative flex items-center gap-2 rounded-full px-3 py-2 text-xs text-mist hover:text-porcelain"><Bot className="h-4 w-4" /><span className="hidden sm:inline">Trevor</span>{notices.length > 0 && <span className="flex items-center gap-1 text-signal"><Bell className="h-3 w-3" />{notices.length > 99 ? '99+' : notices.length}</span>}</Link>
           <p className="hidden text-xs text-steel md:block">
             {formatDate(new Date(), { weekday: 'long', day: '2-digit', month: 'long' })}
           </p>

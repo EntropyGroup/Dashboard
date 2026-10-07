@@ -5,6 +5,7 @@ import path from 'node:path'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: { proxy: { '/api/trevor': { target: 'http://127.0.0.1:8787' } } },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

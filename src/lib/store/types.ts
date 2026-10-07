@@ -127,6 +127,7 @@ export interface NotaTodo {
 }
 
 export interface Board {
+  trevorActionIds?: string[]
   id: string
   markdown: string
   todos: NotaTodo[]
