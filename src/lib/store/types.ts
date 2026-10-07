@@ -113,7 +113,7 @@ export interface Lead {
   contato?: string
   modalidade: LeadModalidade
   categoria: string
-  valor?: number
+  valor?: number | null
   comentario?: string
   lido: boolean
   criadoEm: string
