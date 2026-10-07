@@ -18,7 +18,7 @@ function TabButton({ path, label, icon: Icon, end }: { path: string; label: stri
     <Link
       to={path}
       className={cn(
-        'relative flex w-16 flex-col items-center justify-center gap-1 rounded-full py-2 transition-all duration-200',
+        'relative flex w-14 sm:w-16 flex-col items-center justify-center gap-1 rounded-full py-2 transition-all duration-200',
         isActive ? 'text-obsidian' : 'text-mist hover:text-porcelain',
       )}
     >
@@ -60,14 +60,14 @@ export function BottomBar() {
   )
 
   return (
-    <div className="fixed inset-x-0 bottom-2 z-30 flex justify-center px-4">
-      <nav className="glass-strong relative flex items-center gap-1 rounded-full p-1.5">
+    <div className="fixed inset-x-0 bottom-2 z-30 flex justify-center px-2">
+      <nav className="glass-strong relative flex max-w-full items-center gap-0 sm:gap-1 rounded-full p-1.5">
         {primaryNavItems.slice(0, 2).map((item) => (
           <TabButton key={item.path} path={item.path} label={item.label} icon={item.icon} end={item.path === '/'} />
         ))}
 
         {/* center slot — reserves space under the raised orb */}
-        <div className="relative w-[4.5rem] self-stretch">
+        <div className="relative w-14 sm:w-[4.5rem] self-stretch">
       <Popover.Root>
         <Popover.Trigger asChild>
           <button
@@ -89,10 +89,10 @@ export function BottomBar() {
             align="center"
             sideOffset={14}
             collisionPadding={16}
-            className="glass-strong entropy-sheet z-40 w-72 rounded-2xl p-2"
-            style={{ maxHeight: 'var(--radix-popover-content-available-height)' }}
+            className="glass-strong entropy-sheet z-40 flex w-72 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl p-2"
+            style={{ maxHeight: 'min(70dvh, var(--radix-popover-content-available-height))' }}
           >
-            <div className="max-h-full overflow-y-auto p-1.5">
+            <div className="min-h-0 overflow-y-auto overscroll-contain p-1.5">
               {moreNavGroups.map((group, gi) => {
                 const offset = moreNavGroups.slice(0, gi).reduce((n, g) => n + g.items.length + 1, 0)
                 return (
@@ -118,12 +118,12 @@ export function BottomBar() {
               >
                 <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-2">
                   <div className="glass flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-medium text-porcelain">
-                    {initials(user?.displayName || user?.email || 'U')}
+                    {user?.photoURL ? <img src={user.photoURL} alt="Foto do perfil" className="h-full w-full rounded-full object-cover" /> : initials(user?.displayName || user?.email || 'U')}
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <Popover.Close asChild><Link to="/config" className="min-w-0 flex-1 rounded focus-visible:outline">
                     <p className="truncate text-xs font-medium text-porcelain">{user?.displayName || 'Usuário'}</p>
                     <p className="truncate text-[10px] text-steel">{user?.email}</p>
-                  </div>
+                  </Link></Popover.Close>
                   <button
                     onClick={() => signOut()}
                     className="rounded-md p-1.5 text-steel transition-colors hover:bg-white/[0.08] hover:text-porcelain"

@@ -41,3 +41,8 @@ export function relativeTime(value: Date | string | number) {
 export function uid() {
   return crypto.randomUUID()
 }
+
+/** Date-only form values must use the local calendar, not UTC. */
+export function localDateKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}

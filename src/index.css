@@ -335,37 +335,20 @@
 .entropy-dialog[data-state='open'] .entropy-dialog-body > * > :nth-child(5) { animation-delay: 230ms; }
 .entropy-dialog[data-state='open'] .entropy-dialog-body > * > :nth-child(n + 6) { animation-delay: 260ms; }
 
-/* "Mais" menu — grows out of the center orb. Only scale/translate/blur, never the
-   Radix positioning transform, so it can't start at the wrong spot. */
+/* Keep menu hit targets stationary while it opens and scrolls. */
 @keyframes entropy-sheet-in {
-  0% { opacity: 0; transform: translateY(18px) scale(0.82); filter: blur(10px); }
-  60% { opacity: 1; filter: blur(0); }
-  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-
 @keyframes entropy-sheet-out {
-  from { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-  to { opacity: 0; transform: translateY(12px) scale(0.9); filter: blur(6px); }
-}
-
-@keyframes entropy-item-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.entropy-sheet {
-  transform-origin: var(--radix-popover-content-transform-origin);
-  will-change: transform, opacity;
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 .entropy-sheet[data-state='open'] {
-  animation: entropy-sheet-in 0.42s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  animation: entropy-sheet-in 0.15s ease-out both;
 }
 .entropy-sheet[data-state='closed'] {
-  animation: entropy-sheet-out 0.18s ease-in both;
-}
-.entropy-sheet[data-state='open'] .entropy-sheet-item {
-  animation: entropy-item-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: calc(80ms + var(--i, 0) * 22ms);
+  animation: entropy-sheet-out 0.12s ease-in both;
 }
 
 .entropy-orb-mark {

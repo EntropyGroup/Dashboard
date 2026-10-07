@@ -19,6 +19,7 @@ export interface Project {
   todos: TodoItem[]
   valorCobranca?: number
   link?: string
+  urlProducao?: string
   criadoEm: string
   atualizadoEm: string
 }

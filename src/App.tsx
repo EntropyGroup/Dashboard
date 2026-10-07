@@ -87,7 +87,7 @@ export default function App() {
       <AuthProvider>
         <Gate />
       </AuthProvider>
-      <Toaster theme="dark" position="bottom-right" />
+      <Toaster theme="dark" position="top-right" />
     </BrowserRouter>
   )
 }

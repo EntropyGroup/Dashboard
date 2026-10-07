@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  runTransaction,
   collection,
   deleteDoc,
   doc,
@@ -147,5 +148,39 @@ export function seedMemoryStore(path: string, entries: Record<string, any>) {
   if (!memoryStores.has(path)) {
     memoryStores.set(path, entries)
     notify(path)
+  }
+}
+
+/** Commit all conversion changes together, including in the demo store. */
+export async function saveProjectWithLead(leadId: string, projectId: string, data: Record<string, unknown>, editing: boolean) {
+  const clienteId = `lead-${leadId}`
+  function clientData(lead: Record<string, any>) {
+    return {
+      nome: lead.nome,
+      ...(lead.contato?.includes('@') ? { email: lead.contato } : { celular: lead.contato || '' }),
+      projetos: [projectId],
+      criadoEm: new Date().toISOString(),
+    }
+  }
+  if (isFirebaseConfigured && db) {
+    const firestore = db
+    await guarded('converter lead', () => runTransaction(firestore, async (tx) => {
+      const leadRef = doc(firestore, 'leads', leadId)
+      const lead = await tx.get(leadRef)
+      if (!lead.exists()) throw new Error('Este lead já foi convertido ou removido.')
+      tx.set(doc(firestore, 'clientes', clienteId), clientData(lead.data()))
+      const projectRef = doc(firestore, 'projetos', projectId)
+      if (editing) tx.update(projectRef, { ...data, clienteId })
+      else tx.set(projectRef, { ...data, clienteId })
+      tx.delete(leadRef)
+    }))
+  } else {
+    const lead = getMemoryStore('leads')[leadId]
+    if (!lead) throw new Error('Este lead já foi convertido ou removido.')
+    getMemoryStore('clientes')[clienteId] = { id: clienteId, ...clientData(lead) }
+    const store = getMemoryStore('projetos')
+    store[projectId] = { ...(editing ? store[projectId] : {}), id: projectId, ...data, clienteId }
+    delete getMemoryStore('leads')[leadId]
+    ;['clientes', 'projetos', 'leads'].forEach(notify)
   }
 }

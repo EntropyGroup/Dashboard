@@ -1,15 +1,24 @@
-import { Check, Mail, Trash2, UserPlus } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { Modal } from '@/components/ui/Modal'
+import { Check, Plus, Mail, Trash2, UserPlus } from 'lucide-react'
 import { useStore } from '@/lib/store/StoreProvider'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
-import { cn, formatCurrency, initials, relativeTime, uid } from '@/lib/utils'
+import { cn, formatCurrency, initials, relativeTime } from '@/lib/utils'
 import type { Lead } from '@/lib/store/types'
 
 export function LeadsPage() {
-  const { leads, clientes, projetos, log } = useStore()
+  const { leads, log } = useStore()
   const confirm = useConfirm()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const empty = { nome: '', contato: '', categoria: '', modalidade: 'compra' as Lead['modalidade'], valor: '', comentario: '' }
+  const [form, setForm] = useState(empty)
 
   async function markRead(lead: Lead) {
     await leads.update(lead.id, { lido: !lead.lido })
@@ -25,29 +34,11 @@ export function LeadsPage() {
     if (ok) await leads.remove(lead.id)
   }
 
-  async function convert(lead: Lead) {
-    const clienteId = uid()
-    await clientes.add(
-      { nome: lead.nome, email: lead.contato, projetos: [], criadoEm: new Date().toISOString() },
-      clienteId,
-    )
-    await projetos.add({
-      nome: `${lead.categoria} — ${lead.nome}`,
-      tipo: lead.categoria,
-      status: 'planejamento',
-      clienteId,
-      stack: [],
-      todos: [],
-      valorCobranca: lead.valor,
-      criadoEm: new Date().toISOString(),
-      atualizadoEm: new Date().toISOString(),
-    })
-    await leads.remove(lead.id)
-    log(`Lead <b>${lead.nome}</b> convertido em cliente e projeto`)
-  }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-4">
+      <div className="flex justify-end"><Button size="sm" onClick={() => { setForm(empty); setOpen(true) }}><Plus className="h-3.5 w-3.5" /> Novo lead</Button></div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {leads.items.map((lead) => (
         <Card key={lead.id} className={cn('glass-sheen flex flex-col', lead.lido && 'opacity-60 hover:opacity-100')}>
           <div className="mb-4 flex items-start justify-between gap-2">
@@ -87,8 +78,8 @@ export function LeadsPage() {
           )}
 
           <div className="mt-auto flex flex-wrap items-center gap-1.5">
-            <Button size="sm" variant="secondary" onClick={() => convert(lead)}>
-              <UserPlus className="h-3.5 w-3.5" /> Converter
+            <Button size="sm" variant="secondary" onClick={() => navigate(`/projetos?lead=${encodeURIComponent(lead.id)}`)}>
+              <UserPlus className="h-3.5 w-3.5" /> Adicionar a projeto
             </Button>
             <Button size="sm" variant="ghost" onClick={() => markRead(lead)}>
               <Check className="h-3.5 w-3.5" /> {lead.lido ? 'Marcar como novo' : 'Marcar como visto'}
@@ -103,7 +94,29 @@ export function LeadsPage() {
           </div>
         </Card>
       ))}
-      {!leads.items.length && <p className="text-xs text-steel">Nenhum lead recebido ainda.</p>}
+      {!leads.items.length && <p className="text-xs text-steel">Nenhum lead cadastrado ainda.</p>}
+      </div>
+      <Modal open={open} onOpenChange={setOpen} title="Novo lead">
+        <form className="space-y-3.5" onSubmit={async (e) => {
+          e.preventDefault()
+          if (!form.nome.trim() || saving) return
+          setSaving(true)
+          try {
+            await leads.add({ ...form, nome: form.nome.trim(), valor: form.valor ? Number(form.valor) : undefined, lido: false, criadoEm: new Date().toISOString() })
+            log(`Novo lead <b>${form.nome}</b> cadastrado`)
+            setOpen(false)
+          } catch { toast.error('Não foi possível cadastrar o lead.') }
+          finally { setSaving(false) }
+        }}>
+          <label className="block text-xs text-mist">Nome<input required className="input mt-1.5" value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} /></label>
+          <label className="block text-xs text-mist">Contato (email ou telefone)<input className="input mt-1.5" value={form.contato} onChange={(e) => setForm((f) => ({ ...f, contato: e.target.value }))} /></label>
+          <label className="block text-xs text-mist">Tipo de projeto<input className="input mt-1.5" value={form.categoria} onChange={(e) => setForm((f) => ({ ...f, categoria: e.target.value }))} placeholder="Site, sistema…" /></label>
+          <label className="block text-xs text-mist">Modalidade<select className="input mt-1.5" value={form.modalidade} onChange={(e) => setForm((f) => ({ ...f, modalidade: e.target.value as Lead['modalidade'] }))}><option value="compra">Compra</option><option value="aluguel">Aluguel</option></select></label>
+          <label className="block text-xs text-mist">Valor previsto<input type="number" min="0" step="0.01" className="input mt-1.5" value={form.valor} onChange={(e) => setForm((f) => ({ ...f, valor: e.target.value }))} /></label>
+          <label className="block text-xs text-mist">Observações<textarea className="input mt-1.5" value={form.comentario} onChange={(e) => setForm((f) => ({ ...f, comentario: e.target.value }))} /></label>
+          <div className="flex justify-end gap-2"><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? 'Salvando…' : 'Salvar lead'}</Button></div>
+        </form>
+      </Modal>
     </div>
   )
 }

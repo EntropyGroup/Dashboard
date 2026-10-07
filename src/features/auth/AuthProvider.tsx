@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import {
+  updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -11,6 +12,7 @@ interface MockUser {
   uid: string
   email: string | null
   displayName: string | null
+  photoURL?: string | null
 }
 
 interface AuthValue {
@@ -18,6 +20,8 @@ interface AuthValue {
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  saveProfile: (name: string, photoURL: string) => Promise<void>
+  changePassword: (current: string, next: string) => Promise<void>
   firebaseReady: boolean
 }
 
@@ -51,6 +55,7 @@ function authMessage(code?: string) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | MockUser | null>(null)
+  const [, refreshProfile] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -92,8 +97,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
+  async function saveProfile(name: string, photoURL: string) {
+    if (!user) return
+    if (auth?.currentUser) {
+      await updateProfile(auth.currentUser, { displayName: name, photoURL: photoURL || null })
+      // Firebase mutates the User in place; publish a fresh context value.
+      setUser(auth.currentUser)
+      refreshProfile((version) => version + 1)
+    } else {
+      const updated = { ...user, displayName: name, photoURL }
+      sessionStorage.setItem(MOCK_SESSION_KEY, JSON.stringify(updated))
+      setUser(updated)
+    }
+  }
+
+  async function changePassword(current: string, next: string) {
+    if (!auth?.currentUser?.email) throw new Error('Troca de senha disponível apenas na conta Firebase.')
+    try {
+      await reauthenticateWithCredential(auth.currentUser, EmailAuthProvider.credential(auth.currentUser.email, current))
+      await updatePassword(auth.currentUser, next)
+    } catch (err) {
+      const code = (err as { code?: string }).code
+      if (code === 'auth/weak-password' || code === 'auth/password-does-not-meet-requirements') {
+        throw new Error('A nova senha não atende aos requisitos de segurança da conta.')
+      }
+      throw new Error(authMessage(code))
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, firebaseReady: isFirebaseConfigured }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, saveProfile, changePassword, firebaseReady: isFirebaseConfigured }}>
       {children}
     </AuthContext.Provider>
   )

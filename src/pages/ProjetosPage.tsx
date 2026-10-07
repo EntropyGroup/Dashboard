@@ -1,5 +1,5 @@
-import { useState, type MouseEvent, type ReactNode } from 'react'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useStore } from '@/lib/store/StoreProvider'
 import { Card } from '@/components/ui/Card'
@@ -9,7 +9,9 @@ import { Modal } from '@/components/ui/Modal'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
 import { ProgressBar, progressFromTodos } from '@/components/ui/ProgressBar'
 import { TagInput } from '@/components/shared/TagInput'
-import { formatCurrency, initials } from '@/lib/utils'
+import { formatCurrency, initials, uid } from '@/lib/utils'
+import { toast } from 'sonner'
+import { saveProjectWithLead } from '@/lib/store/useCollection'
 import type { Project, ProjectStatus } from '@/lib/store/types'
 
 const emptyForm = {
@@ -19,17 +21,29 @@ const emptyForm = {
   valorCobranca: '',
   status: 'planejamento' as ProjectStatus,
   link: '',
+  urlProducao: '',
   stack: [] as string[],
 }
 
 export function ProjetosPage() {
-  const { projetos, clientes, log } = useStore()
+  const { projetos, clientes, leads, log } = useStore()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const confirm = useConfirm()
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Project | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const leadId = searchParams.get('lead')
+    const lead = leads.items.find((l) => l.id === leadId)
+    if (!lead) return
+    setEditing(null)
+    setForm({ ...emptyForm, nome: `${lead.categoria || 'Projeto'} — ${lead.nome}`, tipo: lead.categoria, clienteId: `lead:${lead.id}`, valorCobranca: lead.valor ? String(lead.valor) : '' })
+    setModalOpen(true)
+    setSearchParams({}, { replace: true })
+  }, [searchParams, leads.items, setSearchParams])
 
   function openCreate() {
     setEditing(null)
@@ -48,26 +62,32 @@ export function ProjetosPage() {
       valorCobranca: p.valorCobranca ? String(p.valorCobranca) : '',
       status: p.status,
       link: p.link ?? '',
+      urlProducao: p.urlProducao ?? '',
       stack: p.stack,
     })
     setModalOpen(true)
   }
 
   async function handleSubmit() {
-    if (!form.nome) return
+    if (!form.nome.trim() || saving) return
     setSaving(true)
     try {
       const payload = {
         nome: form.nome,
         tipo: form.tipo,
-        clienteId: form.clienteId || undefined,
+        clienteId: form.clienteId.startsWith('lead:') ? undefined : form.clienteId || '',
         valorCobranca: form.valorCobranca ? Number(form.valorCobranca) : undefined,
         status: form.status,
-        link: form.link || undefined,
+        link: form.link || '',
+        urlProducao: form.urlProducao || '',
         stack: form.stack,
         atualizadoEm: new Date().toISOString(),
       }
-      if (editing) {
+      if (form.clienteId.startsWith('lead:')) {
+        await saveProjectWithLead(form.clienteId.slice(5), editing?.id ?? uid(),
+          editing ? payload : { ...payload, todos: [], criadoEm: new Date().toISOString() }, Boolean(editing))
+        log(`Lead convertido em cliente do projeto <b>${form.nome}</b>`)
+      } else if (editing) {
         await projetos.update(editing.id, payload)
         log(`Projeto <b>${form.nome}</b> atualizado`)
       } else {
@@ -75,7 +95,7 @@ export function ProjetosPage() {
         log(`Novo projeto <b>${form.nome}</b> criado`)
       }
       setModalOpen(false)
-    } finally {
+    } catch { toast.error('Não foi possível salvar o projeto. Tente novamente.') } finally {
       setSaving(false)
     }
   }
@@ -200,6 +220,7 @@ export function ProjetosPage() {
           <Field label="Nome" htmlFor="p-nome">
             <input
               id="p-nome"
+              required
               value={form.nome}
               onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
               className="input"
@@ -214,7 +235,7 @@ export function ProjetosPage() {
               placeholder="Site, sistema, e-commerce…"
             />
           </Field>
-          <Field label="Cliente" htmlFor="p-cliente">
+          <Field label="Cliente ou lead" htmlFor="p-cliente">
             <select
               id="p-cliente"
               value={form.clienteId}
@@ -222,11 +243,16 @@ export function ProjetosPage() {
               className="input"
             >
               <option value="">Sem cliente vinculado</option>
+              <optgroup label="Clientes">
               {clientes.items.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nome}
                 </option>
               ))}
+              </optgroup>
+              <optgroup label="Leads — converter ao salvar">
+                {leads.items.map((lead) => <option key={lead.id} value={`lead:${lead.id}`}>{lead.nome}</option>)}
+              </optgroup>
             </select>
           </Field>
           <div className="grid grid-cols-2 gap-3">
@@ -264,6 +290,9 @@ export function ProjetosPage() {
               placeholder="https://…"
               className="input"
             />
+          </Field>
+          <Field label="URL de produção" htmlFor="p-producao">
+            <input id="p-producao" type="url" value={form.urlProducao} onChange={(e) => setForm((f) => ({ ...f, urlProducao: e.target.value }))} placeholder="https://…" className="input" />
           </Field>
           <Field label="Stack" htmlFor="p-stack">
             <TagInput

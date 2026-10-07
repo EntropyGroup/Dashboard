@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Trash2, ExternalLink, Link2 } from 'lucide-react'
 import { useStore } from '@/lib/store/StoreProvider'
@@ -20,6 +21,7 @@ export function ProjetoDetailPage() {
   const { projetos, clientes, lancamentos, log } = useStore()
   const confirm = useConfirm()
   const [descricao, setDescricao] = useState<string | null>(null)
+  const [production, setProduction] = useState<string | null>(null)
   const [link, setLink] = useState<string | null>(null)
 
   const project = projetos.items.find((p) => p.id === id)
@@ -178,6 +180,21 @@ export function ProjetoDetailPage() {
                 </a>
               )}
             </div>
+
+            <form className="mt-4 space-y-2" onSubmit={async (e) => {
+              e.preventDefault()
+              try {
+                await projetos.update(project.id, { urlProducao: production ?? project.urlProducao ?? '' })
+                toast.success('URL de produção salva.')
+              } catch { /* Collection reports errors. */ }
+            }}>
+              <label htmlFor="p-producao" className="block text-xs font-medium text-mist">URL de produção</label>
+              <div className="flex items-center gap-2">
+                <input id="p-producao" type="url" value={production ?? project.urlProducao ?? ''} onChange={(e) => setProduction(e.target.value)} placeholder="https://…" className="input" />
+                <Button type="submit" size="sm">Salvar</Button>
+                {project.urlProducao && <a href={project.urlProducao} target="_blank" rel="noreferrer" aria-label="Abrir produção" className="text-steel hover:text-porcelain"><ExternalLink className="h-4 w-4" /></a>}
+              </div>
+            </form>
 
             <label htmlFor="p-stack" className="mt-4 mb-1.5 block text-xs font-medium text-mist">
               Stack
