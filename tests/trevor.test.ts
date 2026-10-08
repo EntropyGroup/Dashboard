@@ -215,3 +215,8 @@ test('compiled Vercel functions resolve JavaScript dependencies and serve health
     assert.equal((await response.json()).provider, 'gemini')
   } finally { server.close(); await once(server, 'close') }
 })
+
+
+test('Firebase Admin and compiled Vercel handler load without require(ESM)', () => {
+  execFileSync(process.execPath, ['--no-experimental-require-module', '--input-type=module', '-e', "await import('firebase-admin/auth'); await import('./api/trevor/health.js')"], { stdio: 'pipe' })
+})

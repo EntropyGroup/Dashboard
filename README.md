@@ -155,3 +155,6 @@ npm run test:trevor
 ```
 
 Os testes cobrem validação de ações, datas no fuso local, exclusão de lançamentos ocultos dos totais, autenticação/CORS/limites do backend, erros de geração e execução idempotente de tarefas/notas. As chamadas ao Gemini são simuladas nos testes; não consomem cota.
+
+
+A Vercel usa Node 22.x, definido em `package.json`. O override de `jose` para 5.10.0 é restrito à dependência de `jwks-rsa`: evita `ERR_REQUIRE_ESM` nos runtimes que não permitem `require()` de módulos ESM. O teste de inicialização desativa explicitamente esse recurso do Node para reproduzir a restrição do deploy.
