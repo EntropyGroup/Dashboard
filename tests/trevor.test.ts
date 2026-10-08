@@ -1,10 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
+import { createServer, type IncomingMessage } from 'node:http'
 import { parseTrevorReply, validDate } from '../shared/trevor.ts'
 import { financialSummary, buildNotices, localAnswer } from '../src/lib/trevor/insights.ts'
 import { askGemini } from '../server/gemini.ts'
-import { createTrevorServer, validateRequest } from '../server/http.ts'
+import { createTrevorHandler, createTrevorServer, validateRequest } from '../server/http.ts'
 import type { Lancamento, Project } from '../src/lib/store/types.ts'
 
 process.env.TZ = 'America/Fortaleza'
@@ -69,7 +70,7 @@ test('Gemini call keeps the key in a header, requires completed output and valid
     assert.equal(options.headers['x-goog-api-key'], 'server-secret')
     const sent = JSON.parse(options.body)
     assert.equal(sent.contents.at(-1).role, 'user')
-    assert.equal(sent.generationConfig.responseFormat.text.mimeType, 'application/json')
+    assert.equal(sent.generationConfig.responseFormat.text.mimeType, 'APPLICATION_JSON')
     assert.ok(sent.generationConfig.responseFormat.text.schema)
     return new Response(JSON.stringify({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(reply()) }] } }] }), { status: 200 })
   }
@@ -130,4 +131,45 @@ test('approved actions write only the intended store; task and note retries are 
     assert.equal(store.eventos.items.length, 0)
     await assert.rejects(executeAction({ type: 'set_project_status', projectId: 'missing', status: 'concluido' }, 'invalid', store, () => {}))
   } finally { await vite.close() }
+})
+
+
+test('Vercel parsed bodies retain validation, authentication and size limits', async () => {
+  let body: unknown = input
+  const handler = createTrevorHandler({ apiKey: 'test-key', model: 'test-model', origins: ['https://entropydash.vercel.app'], allowedEmails: ['team@example.com'],
+    verifyToken: async () => ({ uid: 'member', email: 'team@example.com' }),
+    fetch: (async () => new Response(JSON.stringify({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(reply()) }] } }] }))) as typeof fetch,
+  })
+  const server = createServer((req, res) => {
+    ;(req as IncomingMessage & { body?: unknown }).body = body
+    void handler(req, res)
+  })
+  server.listen(0, '127.0.0.1'); await once(server, 'listening')
+  const url = `http://127.0.0.1:${(server.address() as { port: number }).port}/api/trevor`
+  const post = (authorized = true) => fetch(url, { method: 'POST', headers: { Origin: 'https://entropydash.vercel.app', 'Content-Type': 'application/json', ...(authorized ? { Authorization: 'Bearer member' } : {}) } })
+  try {
+    assert.equal((await post(false)).status, 401)
+    assert.equal((await post()).status, 200)
+    body = JSON.stringify(input)
+    assert.equal((await post()).status, 200)
+    body = { ...input, message: 'x'.repeat(300000) }
+    assert.equal((await post()).status, 413)
+    body = '{invalid'
+    assert.equal((await post()).status, 400)
+  } finally { server.close(); await once(server, 'close') }
+})
+
+test('Vercel health entrypoint loads without Firebase credentials and serves JSON', async () => {
+  const { default: handler } = await import('../api/trevor/health.ts')
+  const { default: chat } = await import('../api/trevor.ts')
+  assert.equal(chat, handler)
+  const server = createServer(handler)
+  server.listen(0, '127.0.0.1'); await once(server, 'listening')
+  const url = `http://127.0.0.1:${(server.address() as { port: number }).port}`
+  try {
+    const response = await fetch(url + '/api/trevor/health')
+    assert.equal(response.status, 200)
+    assert.deepEqual(await response.json(), { ready: !!process.env.GEMINI_API_KEY, provider: 'gemini' })
+    assert.equal((await fetch(url + '/api/missing')).status, 404)
+  } finally { server.close(); await once(server, 'close') }
 })

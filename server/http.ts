@@ -17,6 +17,14 @@ interface ServerOptions {
 }
 
 async function bodyJson(req: IncomingMessage) {
+  // Vercel may parse the JSON body before invoking a Node handler.
+  const parsed = (req as IncomingMessage & { body?: unknown }).body
+  if (parsed !== undefined) {
+    const raw = typeof parsed === 'string' ? parsed : JSON.stringify(parsed)
+    if (Buffer.byteLength(raw) > 262144) throw new RequestError(413, 'Pedido muito grande. Reduza o contexto.')
+    try { return JSON.parse(raw) }
+    catch { throw new RequestError(400, 'Pedido inválido.') }
+  }
   let bytes = 0
   const parts: Buffer[] = []
   for await (const chunk of req) {
@@ -40,7 +48,7 @@ export function validateRequest(body: any) {
   return { message: body.message.trim(), history: body.history as ChatTurn[], context: body.context, today: body.today as string, timezone: body.timezone as string }
 }
 
-export function createTrevorServer(options: ServerOptions) {
+export function createTrevorHandler(options: ServerOptions) {
   const limits = new Map<string, { count: number; reset: number }>()
   function limited(key: string, max: number) {
     const now = Date.now()
@@ -55,7 +63,7 @@ export function createTrevorServer(options: ServerOptions) {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' })
     res.end(JSON.stringify(value))
   }
-  const server = createServer(async (req, res) => {
+  return async (req: IncomingMessage, res: ServerResponse) => {
     try {
       const origin = req.headers.origin
       if (origin && !options.origins.includes(origin)) throw new RequestError(403, 'Origem não autorizada.')
@@ -85,7 +93,11 @@ export function createTrevorServer(options: ServerOptions) {
     } catch (error) {
       if (!res.headersSent) json(res, error instanceof RequestError ? error.status : 500, { error: error instanceof RequestError ? error.message : 'Não foi possível processar o pedido.' })
     }
-  })
+  }
+}
+
+export function createTrevorServer(options: ServerOptions) {
+  const server = createServer(createTrevorHandler(options))
   server.requestTimeout = 40000
   server.headersTimeout = 10000
   return server

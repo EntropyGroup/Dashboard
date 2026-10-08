@@ -126,7 +126,16 @@ Antes de enviar dados ao Gemini, o usuário ativa **Compartilhar contexto**. O c
 
 ### Produção
 
-O Firebase Hosting atual entrega apenas arquivos estáticos. Hospede o serviço Node separadamente em um ambiente com suporte a Node 22.18+:
+Na Vercel, o frontend e as funções `api/trevor.ts` e `api/trevor/health.ts` são publicados juntos, no mesmo domínio. O `vercel.json` preserva as rotas da API e o acesso direto às páginas do dashboard.
+
+1. Em **Settings → Environment Variables**, configure `GEMINI_API_KEY`, `FIREBASE_SERVICE_ACCOUNT` (JSON completo, sem as aspas simples usadas no `.env`), `FIREBASE_PROJECT_ID`, `TREVOR_ALLOWED_EMAILS` e `TREVOR_ALLOWED_ORIGINS=https://entropydash.vercel.app`. Configure também `GEMINI_MODEL` se quiser mudar o modelo padrão.
+2. Deixe `VITE_TREVOR_API_URL` vazio para usar o mesmo domínio. As variáveis `VITE_FIREBASE_*` do frontend continuam necessárias.
+3. Publique o código atualizado e faça um novo deploy. Não é necessário executar `npm run start:trevor` na Vercel.
+4. Confira `/api/trevor/health`, entre com uma conta autorizada e envie uma mensagem na página Trevor. A rota de saúde confirma a presença da chave; uma conversa real valida as credenciais, o modelo e o acesso ao Gemini.
+
+Os limites em memória são por instância da função; não constituem uma cota global entre instâncias.
+
+Para Firebase Hosting ou outro host estático, hospede o serviço Node separadamente em um ambiente com suporte a Node 22.18+:
 
 - Instalação: `npm ci --omit=dev`. Inicialização: `npm run start:trevor`.
 - Configure os segredos acima no servidor, `PORT` conforme o host e `TREVOR_HOST=0.0.0.0` quando necessário para o host receber conexões.

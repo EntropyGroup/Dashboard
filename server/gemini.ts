@@ -26,7 +26,7 @@ export async function askGemini(input: { message: string; history: ChatTurn[]; c
         ...input.history.map((turn) => ({ role: turn.role === 'assistant' ? 'model' : 'user', parts: [{ text: turn.content }] })),
         { role: 'user', parts: [{ text: JSON.stringify({ dataLocal: input.today, fuso: input.timezone, dadosDoDashboard: input.context, pedidoDoUsuario: input.message }) }] },
       ],
-      generationConfig: { responseFormat: { text: { mimeType: 'application/json', schema: TREVOR_REPLY_SCHEMA } }, maxOutputTokens: 4096, temperature: 0.3 },
+      generationConfig: { responseFormat: { text: { mimeType: 'APPLICATION_JSON', schema: TREVOR_REPLY_SCHEMA } }, maxOutputTokens: 4096, temperature: 0.3 },
     }),
   })
   if (response.status === 429) throw new Error('O limite de uso do Gemini foi atingido. Tente novamente mais tarde.')
