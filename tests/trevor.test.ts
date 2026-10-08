@@ -1,6 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
+import { execFileSync } from 'node:child_process'
+import { readFile } from 'node:fs/promises'
 import { createServer, type IncomingMessage } from 'node:http'
 import { parseTrevorReply, validDate } from '../shared/trevor.ts'
 import { financialSummary, buildNotices, localAnswer } from '../src/lib/trevor/insights.ts'
@@ -160,8 +162,8 @@ test('Vercel parsed bodies retain validation, authentication and size limits', a
 })
 
 test('Vercel health entrypoint loads without Firebase credentials and serves JSON', async () => {
-  const { default: handler } = await import('../api/trevor/health.ts')
-  const { default: chat } = await import('../api/trevor.ts')
+  const { default: handler } = await import('../api/trevor/health.js')
+  const { default: chat } = await import('../api/trevor.js')
   assert.equal(chat, handler)
   const server = createServer(handler)
   server.listen(0, '127.0.0.1'); await once(server, 'listening')
@@ -171,5 +173,45 @@ test('Vercel health entrypoint loads without Firebase credentials and serves JSO
     assert.equal(response.status, 200)
     assert.deepEqual(await response.json(), { ready: !!process.env.GEMINI_API_KEY, provider: 'gemini' })
     assert.equal((await fetch(url + '/api/missing')).status, 404)
+  } finally { server.close(); await once(server, 'close') }
+})
+
+
+test('connection diagnostics distinguish server failure, missing key and an HTML fallback', async () => {
+  const { createServer } = await import('vite')
+  const vite = await createServer({ mode: 'demo', server: { middlewareMode: true }, appType: 'custom' })
+  const originalFetch = globalThis.fetch
+  try {
+    const { inspectTrevorApi } = await vite.ssrLoadModule('/src/lib/trevor/api.ts')
+    globalThis.fetch = async () => new Response('FUNCTION_INVOCATION_FAILED', { status: 500 })
+    assert.match((await inspectTrevorApi()).error, /HTTP 500/)
+    globalThis.fetch = async () => new Response('<html>Dashboard</html>')
+    assert.match((await inspectTrevorApi()).error, /resposta válida/)
+    globalThis.fetch = async () => Response.json({ ready: false, provider: 'gemini' })
+    assert.match((await inspectTrevorApi()).error, /GEMINI_API_KEY/)
+    globalThis.fetch = async () => Response.json({ ready: true, provider: 'gemini' })
+    assert.deepEqual(await inspectTrevorApi(), { ready: true, error: '' })
+    globalThis.fetch = async () => { throw new Error('Network failed') }
+    assert.equal((await inspectTrevorApi()).ready, false)
+  } finally { globalThis.fetch = originalFetch; await vite.close() }
+})
+
+
+test('compiled Vercel functions resolve JavaScript dependencies and serve health', async () => {
+  execFileSync(process.execPath, ['node_modules/typescript/lib/tsc.js', '-p', 'tsconfig.trevor.json'], { stdio: 'pipe' })
+  const base = new URL('../server/.compiled/', import.meta.url)
+  for (const file of ['server/runtime.js', 'server/http.js', 'server/gemini.js']) {
+    const code = await readFile(new URL(file, base), 'utf8')
+    assert.doesNotMatch(code, /from\s*['"][^'"]+\.ts['"]/, file)
+  }
+  const { default: handler } = await import('../api/trevor/health.js')
+  const { default: chat } = await import('../api/trevor.js')
+  assert.equal(chat, handler)
+  const server = createServer(handler)
+  server.listen(0, '127.0.0.1'); await once(server, 'listening')
+  try {
+    const response = await fetch(`http://127.0.0.1:${(server.address() as { port: number }).port}/api/trevor/health`)
+    assert.equal(response.status, 200)
+    assert.equal((await response.json()).provider, 'gemini')
   } finally { server.close(); await once(server, 'close') }
 })

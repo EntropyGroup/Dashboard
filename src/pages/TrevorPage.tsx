@@ -79,9 +79,10 @@ export function TrevorPage() {
           <div className="glass-heavy flex h-12 w-12 items-center justify-center rounded-2xl"><Bot className="h-6 w-6 text-signal" /></div>
           <div><h2 className="text-lg font-medium text-porcelain">Trevor</h2><p className="mt-1 text-xs text-steel">Seu assistente para projetos, finanças e agenda.</p></div>
         </div>
-        <div className="flex items-center gap-2"><span className="glass-pill rounded-full px-3 py-1 text-[11px] text-mist">{trevor.ready ? 'Gemini disponível' : 'Modo local'}</span><button aria-label="Verificar conexão do Trevor" className="rounded-lg p-2 text-steel hover:text-porcelain" onClick={trevor.reconnect}><RefreshCw className="h-4 w-4" /></button></div>
+        <div className="flex items-center gap-2"><span className="glass-pill rounded-full px-3 py-1 text-[11px] text-mist">{trevor.ready ? 'Gemini disponível' : 'Modo local'}</span><Button size="sm" variant="secondary" disabled={trevor.checkingConnection} onClick={trevor.reconnect}><RefreshCw className={cn("h-3.5 w-3.5", trevor.checkingConnection && "animate-spin")} />{trevor.checkingConnection ? 'Verificando…' : 'Verificar conexão'}</Button></div>
       </div>
-      {!trevor.ready && <p className="mt-4 text-xs leading-relaxed text-steel">Resumos e avisos funcionam com seus dados locais. Para conversar livremente, configure a chave do Gemini no servidor e entre com sua conta Firebase.</p>}
+      {trevor.connectionError && <p role="status" className="mt-4 text-xs leading-relaxed text-warning">{trevor.connectionError}</p>}
+      {!trevor.ready && !trevor.connectionError && <p className="mt-4 text-xs leading-relaxed text-steel">Resumos e avisos funcionam com seus dados locais. Para conversar livremente, configure a chave do Gemini no servidor e entre com sua conta Firebase.</p>}
     </Card>
     <div className="grid min-w-0 gap-4 lg:grid-cols-3">
       <Card className="flex min-w-0 flex-col lg:col-span-2">

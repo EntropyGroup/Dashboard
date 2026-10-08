@@ -4,7 +4,7 @@ import { useAuth } from '@/features/auth/AuthProvider'
 import { useStore } from '@/lib/store/StoreProvider'
 import { useConfirm } from '@/components/ui/ConfirmProvider'
 import { buildNotices, financialSummary, localAnswer, projectReview, type TrevorNotice } from '@/lib/trevor/insights'
-import { checkTrevorApi, requestTrevor } from '@/lib/trevor/api'
+import { inspectTrevorApi, requestTrevor } from '@/lib/trevor/api'
 import { describeAction, executeAction, proposalId } from './actions'
 import { uid } from '@/lib/utils'
 import type { TrevorAction } from '../../../shared/trevor'
@@ -17,6 +17,8 @@ interface TrevorValue {
   loading: boolean
   executing: boolean
   ready: boolean
+  checkingConnection: boolean
+  connectionError: string
   dataLoading: boolean
   shareContext: boolean
   setShareContext: (value: boolean) => void
@@ -50,6 +52,8 @@ export function TrevorProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false)
   const [executing, setExecuting] = useState(false)
   const [ready, setReady] = useState(false)
+  const [checkingConnection, setCheckingConnection] = useState(true)
+  const [connectionError, setConnectionError] = useState('')
   const [shareContext, setShareContext] = useState(false)
   const busy = useRef(false)
   const actionBusy = useRef(false)
@@ -61,12 +65,26 @@ export function TrevorProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const controller = new AbortController()
-    checkTrevorApi(controller.signal).then((available) => { if (!controller.signal.aborted) setReady(available && firebaseReady) })
+    setCheckingConnection(true)
+    inspectTrevorApi(controller.signal).then((result) => {
+      if (controller.signal.aborted) return
+      setReady(result.ready && firebaseReady)
+      setConnectionError(result.error || (!firebaseReady ? 'Entre pelo login Firebase para usar o Gemini. O modo de demonstração usa apenas análises locais.' : ''))
+      setCheckingConnection(false)
+    })
     const timer = setInterval(() => setClock(new Date()), 60000)
     return () => { controller.abort(); clearInterval(timer) }
   }, [firebaseReady])
 
-  async function reconnect() { setReady(await checkTrevorApi() && firebaseReady) }
+  async function reconnect() {
+    if (checkingConnection) return
+    setCheckingConnection(true)
+    const result = await inspectTrevorApi()
+    setReady(result.ready && firebaseReady)
+    setConnectionError(result.error || (!firebaseReady ? 'Entre pelo login Firebase para usar o Gemini. O modo de demonstração usa apenas análises locais.' : ''))
+    setCheckingConnection(false)
+    if (result.ready && firebaseReady) toast.success('Conexão com o servidor do Trevor disponível.')
+  }
   function dismiss(id: string) {
     const ids = [...dismissed.filter((item) => item !== id), id].slice(-200)
     try { localStorage.setItem(key + '.dismissed', JSON.stringify(ids)); setDismissed(ids) }
@@ -130,7 +148,7 @@ export function TrevorProvider({ children }: { children: ReactNode }) {
     } catch (error) { toast.error((error as Error).message || 'Não foi possível executar o pedido.') }
     finally { actionBusy.current = false; setExecuting(false) }
   }
-  return <TrevorContext.Provider value={{ messages, notices, loading, executing, ready, dataLoading, shareContext, setShareContext, send, propose, approve, dismiss, clear: () => { if (!busy.current && !actionBusy.current) setMessages([]) }, reconnect }}>{children}</TrevorContext.Provider>
+  return <TrevorContext.Provider value={{ messages, notices, loading, executing, ready, checkingConnection, connectionError, dataLoading, shareContext, setShareContext, send, propose, approve, dismiss, clear: () => { if (!busy.current && !actionBusy.current) setMessages([]) }, reconnect }}>{children}</TrevorContext.Provider>
 }
 export function useTrevor() {
   const value = useContext(TrevorContext)

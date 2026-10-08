@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run build:trevor && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "sync:banco": "node --env-file=.env scripts/sync-pluggy.mjs",
     "dev:demo": "vite --mode demo --port 5174",
     "dev:trevor": "node --env-file-if-exists=.env --watch server/index.ts",
     "start:trevor": "node --env-file-if-exists=.env server/index.ts",
-    "test:trevor": "node --test tests/trevor.test.ts"
+    "test:trevor": "npm run build:trevor && node --test tests/trevor.test.ts",
+    "build:trevor": "tsc -p tsconfig.trevor.json"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.2.6",
