@@ -23,3 +23,6 @@ service-account*.json
 
 # Backend JavaScript gerado antes do empacotamento na Vercel
 server/.compiled/
+
+# exportação do painel do Claude (dados de prospects, não versionar)
+painel-claude*.json

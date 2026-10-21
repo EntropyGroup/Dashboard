@@ -13,7 +13,10 @@
     "dev:trevor": "node --env-file-if-exists=.env --watch server/index.ts",
     "start:trevor": "node --env-file-if-exists=.env server/index.ts",
     "test:trevor": "npm run build:trevor && node --test tests/trevor.test.ts",
-    "build:trevor": "tsc -p tsconfig.trevor.json"
+    "build:trevor": "tsc -p tsconfig.trevor.json",
+    "harvey": "node --env-file-if-exists=.env harvey/index.ts",
+    "harvey:teste": "node --env-file-if-exists=.env harvey/index.ts --once",
+    "importar:painel": "node --env-file=.env scripts/importar-painel-claude.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.2.6",

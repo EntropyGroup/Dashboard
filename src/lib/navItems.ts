@@ -14,6 +14,8 @@ import {
   Settings,
   Server,
   ShieldCheck,
+  Target,
+  Camera,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -44,6 +46,13 @@ export const navGroups: NavGroup[] = [
       { path: '/financeiro', label: 'Financeiro', icon: Wallet },
       { path: '/clientes', label: 'Clientes', icon: Users },
       { path: '/leads', label: 'Leads', icon: Inbox },
+    ],
+  },
+  {
+    label: 'Vendas e conteúdo',
+    items: [
+      { path: '/vendas', label: 'Vendas', icon: Target },
+      { path: '/instagram', label: 'Instagram', icon: Camera },
     ],
   },
   {

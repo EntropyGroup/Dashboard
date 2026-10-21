@@ -12,6 +12,15 @@ import type {
   PersonalProject,
   Project,
   SyncStatus,
+  Prospect,
+  OutboxItem,
+  HarveyConfig,
+  HarveyStatus,
+  HarveyLog,
+  IgPost,
+  IgPerfil,
+  IgReferencia,
+  IgTendencia,
 } from './types'
 
 interface StoreValue {
@@ -26,6 +35,15 @@ interface StoreValue {
   minhasNotas: ReturnType<typeof useCollection<Board>>
   /** last bank sync, written by scripts/sync-pluggy.mjs */
   syncBanco: SyncStatus | undefined
+  prospects: ReturnType<typeof useCollection<Prospect>>
+  outbox: ReturnType<typeof useCollection<OutboxItem>>
+  /** documents `config` (team edits) and `status` (written by the Harvey agent) */
+  harvey: ReturnType<typeof useCollection<HarveyConfig | HarveyStatus>>
+  harveyLog: ReturnType<typeof useCollection<HarveyLog>>
+  igPosts: ReturnType<typeof useCollection<IgPost>>
+  igPerfil: ReturnType<typeof useCollection<IgPerfil>>
+  igReferencias: ReturnType<typeof useCollection<IgReferencia>>
+  igTendencias: ReturnType<typeof useCollection<IgTendencia>>
   log: (texto: string) => void
 }
 
@@ -44,6 +62,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     seedMemoryStore('eventos', seededCollections.eventos)
     seedMemoryStore('atividades', seededCollections.atividades)
     seedMemoryStore('leads', seededCollections.leads)
+    seedMemoryStore('prospects', seededCollections.prospects)
+    seedMemoryStore('outbox', seededCollections.outbox)
   }, [])
 
   const projetos = useCollection<Project>('projetos', { orderByField: 'criadoEm', direction: 'desc' })
@@ -63,6 +83,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const minhasNotas = useCollection<Board>(`quadros_usuario/${user?.uid ?? 'anon'}/itens`)
   const sync = useCollection<SyncStatus>('sync')
   const syncBanco = sync.items.find((s) => s.id === 'pluggy')
+  const prospects = useCollection<Prospect>('prospects', { orderByField: 'criadoEm', direction: 'desc' })
+  const outbox = useCollection<OutboxItem>('outbox', { orderByField: 'criadoEm', direction: 'desc' })
+  const harvey = useCollection<HarveyConfig | HarveyStatus>('harvey')
+  const harveyLog = useCollection<HarveyLog>('harvey_log', { orderByField: 'criadoEm', direction: 'desc' })
+  const igPosts = useCollection<IgPost>('ig_posts', { orderByField: 'data', direction: 'desc' })
+  const igPerfil = useCollection<IgPerfil>('ig_perfil')
+  const igReferencias = useCollection<IgReferencia>('ig_referencias')
+  const igTendencias = useCollection<IgTendencia>('ig_tendencias', { orderByField: 'criadoEm', direction: 'desc' })
 
   function log(texto: string) {
     atividades.add({
@@ -86,6 +114,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         quadroEquipe,
         minhasNotas,
         syncBanco,
+        prospects,
+        outbox,
+        harvey,
+        harveyLog,
+        igPosts,
+        igPerfil,
+        igReferencias,
+        igTendencias,
         log,
       }}
     >

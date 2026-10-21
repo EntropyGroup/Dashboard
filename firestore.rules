@@ -26,6 +26,19 @@ service cloud.firestore {
     match /leads/{id}       { allow read, write: if isTeam(); }
     match /quadros/{id}     { allow read, write: if isTeam(); }
 
+    // Vendas (Harvey). O agente no PC escreve com a conta de serviço (ignora estas regras).
+    match /prospects/{id}   { allow read, write: if isTeam(); }
+    match /outbox/{id}      { allow read, write: if isTeam(); }
+    // harvey/config: o time edita (pausa, cidades, limites). harvey/status: só o agente escreve.
+    match /harvey/{id}      { allow read: if isTeam(); allow write: if isTeam() && id == 'config'; }
+    match /harvey_log/{id}  { allow read: if isTeam(); }
+
+    // Instagram (analista). Notas e auditoria vêm do agente; tendências e referências o time também edita.
+    match /ig_posts/{id}        { allow read: if isTeam(); }
+    match /ig_perfil/{id}       { allow read: if isTeam(); }
+    match /ig_referencias/{id}  { allow read, write: if isTeam(); }
+    match /ig_tendencias/{id}   { allow read, write: if isTeam(); }
+
     // Status da sincronização bancária: o script escreve com a conta de serviço (que ignora
     // estas regras); o painel só lê.
     match /sync/{id}        { allow read: if isTeam(); }
