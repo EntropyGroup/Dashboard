@@ -25,6 +25,15 @@ Pausar, mudar cidades, segmentos e limites: **Vendas → Harvey** no painel. Val
   e depois `claude` uma vez para fazer login. O Harvey usa a assinatura, sem chave de API.
 - Internet e o PC ligado. Ele roda com pouca memória (o trabalho pesado é do Claude).
 
+## Instalação rápida num servidor Linux (Ubuntu/Debian ou Arch)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EntropyGroup/Dashboard/main/harvey/instalar-servidor.sh -o instalar.sh
+bash instalar.sh
+```
+
+O script instala Node e Claude Code, baixa o código, testa um ciclo e cria o serviço. Abaixo, o mesmo passo a passo à mão.
+
 ## Instalação (uma vez)
 
 ```bash
