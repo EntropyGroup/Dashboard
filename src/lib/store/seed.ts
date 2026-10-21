@@ -6,6 +6,8 @@ import type {
   Lancamento,
   Lead,
   Project,
+  Prospect,
+  OutboxItem,
 } from './types'
 
 const now = new Date()
@@ -170,6 +172,21 @@ export const seedLeads: Lead[] = [
   },
 ]
 
+
+// ---------- Vendas (modo demonstração: empresas fictícias) ----------
+
+const dia = (n: number) => iso(daysFromNow(n)).slice(0, 10)
+
+export const seedProspects: Prospect[] = [
+  { id: 'demo-p1', empresa: 'Loja Exemplo Moda', segmento: 'varejo', cidade: 'São Luís', uf: 'MA', origem: 'prospeccao', instagram: 'lojaexemplo', whatsapp: '98900000000', etapa: 'mapeado', encaixe: 'A', toque: 0, diagnostico: 'Vende pelo direct; link da bio genérico; sem catálogo com preço.', criadoPor: 'harvey', proximoPasso: 'preparar 1º contato', proximoData: dia(0), criadoEm: iso(daysAgo(1)) },
+  { id: 'demo-p2', empresa: 'Clínica Exemplo', segmento: 'premium', cidade: 'Teresina', uf: 'PI', origem: 'prospeccao', instagram: 'clinicaexemplo', etapa: 'abordado', encaixe: 'B', toque: 1, ultimoContato: dia(-3), proximoPasso: 'follow-up 1 (print ou sugestão aplicada)', proximoData: dia(0), criadoPor: 'harvey', criadoEm: iso(daysAgo(5)), historico: [{ data: dia(-3), canal: 'Instagram', resumo: '1º contato enviado' }] },
+  { id: 'demo-p3', empresa: 'Distribuidora Exemplo', segmento: 'sistema', cidade: 'Fortaleza', uf: 'CE', origem: 'indicacao', indicadoPor: 'Cliente exemplo', etapa: 'proposta', encaixe: 'A', toque: 2, valor: 8000, proximoPasso: 'follow-up da proposta', proximoData: dia(2), criadoPor: 'time', criadoEm: iso(daysAgo(12)) },
+]
+
+export const seedOutbox: OutboxItem[] = [
+  { id: 'demo-o1', prospectId: 'demo-p1', empresa: 'Loja Exemplo Moda', tipo: 'abordagem', canal: 'whatsapp', destino: '98900000000', toque: 1, texto: 'Oi, tudo bem? Aqui é o Daniel, da Entropy, um estúdio de sites e sistemas de São Luís. Vi que os pedidos de vocês rolam pelo direct; dá pra montar um catálogo com preço e carrinho que manda o pedido pronto. Posso te mandar um print de como ficaria? Se não fizer sentido agora, sem problema.', motivo: 'Exemplo de mensagem preparada pelo Harvey', status: 'pendente', criadoEm: iso(daysAgo(0)) },
+]
+
 export const seededCollections = {
   clientes: keyBy(seedClients),
   projetos: keyBy(seedProjects),
@@ -177,4 +194,6 @@ export const seededCollections = {
   eventos: keyBy(seedEventos),
   atividades: keyBy(seedAtividades),
   leads: keyBy(seedLeads),
+  prospects: keyBy(seedProspects),
+  outbox: keyBy(seedOutbox),
 }

@@ -69,6 +69,8 @@ não precisa ser secret). Para rodar localmente, as mesmas chaves no `.env` e `n
 - **Financeiro** — lançamentos manuais e do banco (Pluggy), saídas por categoria, vínculo com projeto.
 - **Clientes** — cadastro com projetos vinculados.
 - **Leads** — funil simples com conversão em cliente + projeto.
+- **Vendas** — Hoje (fila de aprovação das mensagens que o Harvey prepara), Funil, Prospects (kanban com histórico, resposta do lead e conversão em cliente) e Harvey (status, pausa, configuração e log).
+- **Instagram** — Conteúdo (nota de cada post e auditoria do perfil) e Mercado (tendências para adaptar e perfis acompanhados).
 - **Projetos** / **Projeto (detalhe)** — status, progresso via checklist, financeiro vinculado.
 - **Projetos pessoais** — mesmo padrão, privado por usuário.
 - **Calendário** — grid mensal com eventos arrastáveis.
@@ -77,10 +79,16 @@ não precisa ser secret). Para rodar localmente, as mesmas chaves no `.env` e `n
 - **Infraestrutura** / **Segurança** — placeholders para funcionalidades futuras.
 - **Configurações** — perfil e segurança da conta.
 
+## Harvey — agente de vendas no PC do estúdio
+
+Roda sozinho num PC sempre ligado, com a assinatura do Claude (Claude Code), e grava no Firestore: prospecta, diagnostica, escreve o 1º contato, os follow-ups e as respostas, e analisa o Instagram. Nenhuma mensagem sai sozinha: tudo vai para a fila de aprovação em **Vendas → Hoje**. Instalação e operação em [`harvey/README.md`](harvey/README.md). Depois de publicar esta versão, atualize as regras do Firestore com o [`firestore.rules`](firestore.rules) (novas coleções `prospects`, `outbox`, `harvey`, `harvey_log`, `ig_*`).
+
 ## Estrutura
 
 ```
-scripts/         sync-pluggy.mjs (sincronização bancária, roda no GitHub Actions)
+scripts/         sync-pluggy.mjs (sincronização bancária, roda no GitHub Actions), importar-painel-claude.mjs
+harvey/          agente de vendas que roda no PC (Node 22.18+, Claude Code)
+shared/          regras compartilhadas entre painel, Trevor e Harvey (vendas.ts: cadência, links de envio)
 src/
   components/    ui/ (primitivos), layout/ (header, bottom bar), brand/, shared/
   features/auth/ AuthProvider + tela de login

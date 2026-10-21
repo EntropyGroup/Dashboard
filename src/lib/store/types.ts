@@ -141,3 +141,170 @@ export interface TeamMember {
   stack: string[]
   fotoUrl?: string
 }
+
+// ---------- Vendas (Harvey) ----------
+
+export type ProspectEtapa = 'mapeado' | 'abordado' | 'respondeu' | 'reuniao' | 'proposta' | 'fechado' | 'perdido'
+export type ProspectSegmento = 'sistema' | 'varejo' | 'premium' | 'outro'
+export type ProspectOrigem = 'prospeccao' | 'indicacao' | 'conteudo' | 'inbound'
+export type Canal = 'whatsapp' | 'instagram' | 'email'
+
+export interface HistoricoItem {
+  data: string
+  canal?: string
+  resumo: string
+  autor?: string
+}
+
+export interface Prospect {
+  id: string
+  empresa: string
+  segmento: ProspectSegmento
+  cidade?: string
+  uf?: string
+  origem: ProspectOrigem
+  indicadoPor?: string
+  instagram?: string
+  site?: string
+  whatsapp?: string
+  email?: string
+  contato?: string
+  canalPreferido?: Canal
+  etapa: ProspectEtapa
+  encaixe?: 'A' | 'B' | 'C'
+  /** last cadence touch already sent (0 = none) */
+  toque?: number
+  ultimoContato?: string
+  proximoPasso?: string
+  proximoData?: string
+  valor?: number | null
+  dor?: string
+  decisor?: string
+  orcamento?: string
+  prazo?: string
+  diagnostico?: string
+  /** reply the team pasted; Harvey drafts an answer and clears it */
+  respostaPendente?: string
+  motivoPerda?: string
+  notas?: string
+  historico?: HistoricoItem[]
+  criadoPor?: 'harvey' | 'time'
+  criadoEm: string
+  atualizadoEm?: string
+}
+
+export type OutboxTipo = 'abordagem' | 'followup' | 'encerramento' | 'resposta' | 'proposta'
+export type OutboxStatus = 'pendente' | 'enviada' | 'descartada'
+
+export interface OutboxItem {
+  id: string
+  prospectId: string
+  empresa: string
+  tipo: OutboxTipo
+  canal: Canal
+  destino?: string
+  toque?: number
+  texto: string
+  /** why Harvey wrote this now, in one line */
+  motivo?: string
+  status: OutboxStatus
+  criadoEm: string
+  decididoEm?: string
+  decididoPor?: string
+}
+
+export interface HarveyConfig {
+  id: string
+  pausado: boolean
+  cidades: string[]
+  segmentos: ProspectSegmento[]
+  minFunil: number
+  prospeccaoDia: number
+  abordagensDia: number
+  silencioInicio: string
+  silencioFim: string
+  intervaloMin: number
+  atualizadoEm?: string
+}
+
+export interface HarveyStatus {
+  id: string
+  heartbeat: string
+  estado: 'trabalhando' | 'dormindo' | 'pausado' | 'silencio' | 'erro'
+  ultimaAcao?: string
+  proximoCiclo?: string
+  hoje?: { data: string; chamadas: number; prospectados: number; mensagens: number }
+  erro?: string
+  versao?: string
+}
+
+export interface HarveyLog {
+  id: string
+  criadoEm: string
+  tipo: 'prospeccao' | 'mensagem' | 'diagnostico' | 'analise' | 'sistema' | 'erro'
+  texto: string
+}
+
+// ---------- Instagram (analista) ----------
+
+export interface IgPost {
+  id: string
+  data: string
+  tipo?: string
+  url?: string
+  imagem?: string
+  texto?: string
+  pilar?: string
+  gancho?: string
+  alcance?: number
+  curtidas?: number
+  comentarios?: number
+  salvos?: number
+  compart?: number
+  views?: number
+  follows?: number
+  nota?: number
+  leitura?: string
+  atualizadoEm?: string
+}
+
+export interface IgPerfilItem {
+  area: string
+  nota: number
+  achado: string
+  acao: string
+}
+
+export interface IgPerfil {
+  id: string
+  data: string
+  seguidores?: number
+  posts30d?: number
+  notaGeral: number
+  itens: IgPerfilItem[]
+}
+
+export interface IgReferencia {
+  id: string
+  handle: string
+  nome?: string
+  tipo: 'concorrente' | 'referencia-formato' | 'cliente-ideal'
+  seguidores?: string
+  porque?: string
+  ultimaLeitura?: string
+}
+
+export type TendenciaStatus = 'ideia' | 'na-pauta' | 'feito' | 'descartada'
+
+export interface IgTendencia {
+  id: string
+  titulo: string
+  formato?: string
+  gancho?: string
+  exemplo?: string
+  fonte?: string
+  porqueFunciona?: string
+  comoAdaptar?: string
+  status: TendenciaStatus
+  criadoEm: string
+}

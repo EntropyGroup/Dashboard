@@ -14,6 +14,8 @@ import { AtividadesPage } from '@/pages/AtividadesPage'
 import { FinanceiroPage } from '@/pages/FinanceiroPage'
 import { ClientesPage } from '@/pages/ClientesPage'
 import { LeadsPage } from '@/pages/LeadsPage'
+import { VendasPage } from '@/pages/VendasPage'
+import { InstagramPage } from '@/pages/InstagramPage'
 import { ProjetosPage } from '@/pages/ProjetosPage'
 import { ProjetoDetailPage } from '@/pages/ProjetoDetailPage'
 import { ProjetosPessoaisPage } from '@/pages/ProjetosPessoaisPage'
@@ -50,6 +52,8 @@ function Gate() {
             <Route path="financeiro" element={<FinanceiroPage />} />
             <Route path="clientes" element={<ClientesPage />} />
             <Route path="leads" element={<LeadsPage />} />
+            <Route path="vendas" element={<VendasPage />} />
+            <Route path="instagram" element={<InstagramPage />} />
             <Route path="projetos" element={<ProjetosPage />} />
             <Route path="projetos/:id" element={<ProjetoDetailPage />} />
             <Route path="projetos-pessoais" element={<ProjetosPessoaisPage />} />
